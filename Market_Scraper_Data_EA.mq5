@@ -1,5 +1,5 @@
 //+------------------------------------------------------------------+
-//|                                           JustProfitSystemEA.mq5 |
+//|                                       Market_Scraper_Data_EA.mq5 |
 //|                                                          loldlm1 |
 //|                                                                  |
 //+------------------------------------------------------------------+
@@ -7,10 +7,10 @@
 #property description   "Copyright Traders Capital Team."
 #property version       "1.10"
 #property description   "Support Contact @loldlm"
-#property description   "All Rights Reverved for the Traders Capital Team."
-#property description   "Used Currency [ALL]"
+#property description   "All Rights Reserved for the Traders Capital Team."
+#property description   "Market Data Scraper - Stores indicator data to SQLite"
 
-// GENERIC INCLUDED TOOLS
+// STANDARD MQL5 LIBRARIES
 #include <Trade/Trade.mqh>
 #include <Trade/AccountInfo.mqh>
 #include <Trade/SymbolInfo.mqh>
@@ -43,31 +43,29 @@ input int    Custom_Magic       = 0;
 input double Max_Spread         = 15;
 input double Min_Range_Points   = 15;
 
-// TRADING TOOLS
-#include <TradingTools/array_functions.mqh>
-#include <TradingTools/miscelaneos.mqh>
-#include <TradingTools/signal_enums.mqh>
-#include <TradingTools/base_structures.mqh>
-#include <TradingTools/money_functions.mqh>
+// CUSTOM SERVICES - TRADING TOOLS
+#include "services/trading_tools/array_functions.mqh"
+#include "services/trading_tools/miscelaneos.mqh"
+#include "services/trading_tools/signal_enums.mqh"
+#include "services/trading_tools/base_structures.mqh"
+#include "services/trading_tools/money_functions.mqh"
+#include "services/trading_tools/logs_helper.mqh"
 
-// TRADING SIGNALS STUFF
-#include <TradingSignals/signal_params_struct.mqh>
-#include <TradingTools/logs_helper.mqh>
+// CUSTOM SERVICES - TRADING SIGNALS
+#include "services/trading_signals/signal_params_struct.mqh"
+#include "services/trading_signals/market_signal_crawler.mqh"
+#include "services/trading_signals/tick_signals_manager.mqh"
 
-// TRADING MANAGEMENT
-#include <TradingManagement/market_conditions_functions.mqh>
-#include <TradingManagement/indicator_definitions_loader.mqh>
+// CUSTOM SERVICES - TRADING MANAGEMENT
+#include "services/trading_management/market_conditions_functions.mqh"
+#include "services/trading_management/indicator_definitions_loader.mqh"
 
-// TRADING SIGNALS
-#include <TradingSignals/market_signal_crawler.mqh>
-#include <TradingSignals/tick_signals_manager.mqh>
+// CUSTOM SERVICES - TRADING DATABASE
+#include "services/trading_database/initial_database_setup.mqh"
+#include "services/trading_database/database_signal_wrapper.mqh"
 
-// TRADING DATABASE
-#include <TradingDatabase/initial_database_setup.mqh>
-#include <TradingDatabase/database_signal_wrapper.mqh>
-
-// FRONT END
-#include <FrontEnd/ea_license_light_version.mqh>
+// CUSTOM SERVICES - FRONTEND
+#include "services/frontend/ea_license_light_version.mqh"
 
 int OnInit()
 {
