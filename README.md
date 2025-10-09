@@ -16,6 +16,7 @@ The primary purpose is to build a robust dataset for machine learning, backtesti
 - Bollinger Bands Percent (BB%) data
 - Stochastic Oscillator values
 - Market structure patterns based on stochastic movements
+- Candle body oscillator and momentum data
 
 ## Key Features
 
@@ -50,6 +51,12 @@ The primary purpose is to build a robust dataset for machine learning, backtesti
    - Lower Highs (LH), Lower Lows (LL)
    - Structure timestamps and prices
    - Fibonacci retracement levels
+
+5. **Body MA (Candle Body Oscillator)**
+   - Candle body size oscillator
+   - Moving average of body sizes
+   - Body trend (strong/weak)
+   - Body vs MA relationship (bullish/bearish)
 
 ### Database Storage
 
@@ -131,6 +138,33 @@ Market structure analysis based on stochastic:
 
 **PRIMARY KEY**: `(signal_id, timeframe, period)` - ensures one record per signal/timeframe/period combination
 
+### BodyMADB
+Candle body oscillator and moving average data per signal:
+- `signal_id` (FK): Links to SignalParamsDB
+- `timeframe`: Chart period (e.g., PERIOD_M1, PERIOD_H1)
+- `period`: Indicator period (always 5 for Body MA)
+- `body_value_0-3`: Raw candle body size values for bars 0-3 (abs(close - open))
+- `body_ma_0-3`: Moving average of body values for bars 0-3
+- `body_trend_0-3`: Body trend classification:
+  - `0` = BODY_UNDEFINED (equal values)
+  - `1` = STRONG_BODY_TREND (current body > previous body, increasing momentum)
+  - `2` = WEAK_BODY_TREND (current body < previous body, decreasing momentum)
+- `body_ma_state_0-3`: Body vs MA relationship:
+  - `0` = BODY_UNDEFINED_MA (body = MA)
+  - `1` = BODY_BULLISH_MA (body > MA, above-average candle size)
+  - `2` = BODY_BEARISH_MA (body < MA, below-average candle size)
+
+**PRIMARY KEY**: `(signal_id, timeframe, period)` - ensures one record per signal/timeframe/period combination
+
+**Data Timing**: All `_0` values represent the entry_time candle, `_1` = 1 bar before entry, `_2` = 2 bars before, `_3` = 3 bars before
+
+**Interpretation**:
+- Large body values indicate strong directional moves
+- Small body values indicate consolidation or indecision
+- STRONG_BODY_TREND suggests accelerating momentum
+- BODY_BULLISH_MA indicates current candle is larger than average (strong move)
+- Useful for filtering noise and identifying genuine breakouts vs. weak moves
+
 ## How It Works
 
 ### Signal Detection Logic
@@ -199,6 +233,7 @@ Market structure analysis based on stochastic:
    - `BB_Percent_Standard.ex5`
    - `Stochastic.ex5`
    - `Stochastic_Structure.ex5`
+   - `Body_MA.ex5`
 
 4. Compile the EA in MetaEditor
 
@@ -345,6 +380,22 @@ WHERE bp.timeframe = 1 AND bp.period = 21
 ORDER BY sp.entry_time DESC;
 ```
 
+### Analyze Body MA Momentum
+```sql
+SELECT
+  sp.entry_time,
+  sp.signal_type,
+  bm.body_value_0,
+  bm.body_ma_0,
+  bm.body_trend_0,
+  bm.body_ma_state_0,
+  sp.raw_profit
+FROM SignalParamsDB sp
+JOIN BodyMADB bm ON sp.signal_id = bm.signal_id
+WHERE bm.timeframe = 1 AND bm.period = 5
+ORDER BY sp.entry_time DESC;
+```
+
 ### Get Complete Signal Data for Machine Learning
 ```sql
 SELECT
@@ -365,15 +416,21 @@ SELECT
   s.stochastic_0,
   s.stochastic_signal_0,
   sm.first_structure_type,
-  sm.first_fibonacci_level
+  sm.first_fibonacci_level,
+  bm.body_value_0,
+  bm.body_ma_0,
+  bm.body_trend_0,
+  bm.body_ma_state_0
 FROM SignalParamsDB sp
 JOIN MarketDatasetsDB md ON sp.dataset_id = md.dataset_id
 JOIN BandsPercentDB bp ON sp.signal_id = bp.signal_id
 JOIN StochasticDB s ON sp.signal_id = s.signal_id
 JOIN StochasticMarketStructureDB sm ON sp.signal_id = sm.signal_id
+JOIN BodyMADB bm ON sp.signal_id = bm.signal_id
 WHERE bp.timeframe = 1 AND bp.period = 21
   AND s.timeframe = 1 AND s.period = 5
   AND sm.timeframe = 1 AND sm.period = 5
+  AND bm.timeframe = 1 AND bm.period = 5
 ORDER BY sp.entry_time DESC;
 ```
 
