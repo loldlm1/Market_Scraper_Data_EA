@@ -25,6 +25,7 @@ struct SignalParams
 	BandsPercentStructure 		bands_percent_data[];
 	StochasticStructure   		stochastic_data[];
 	StochasticMarketStructure stoch_market_structure_data[];
+	BodyMAStructure           body_ma_data[];
 
 	// DEFAULT CONSTRUCTOR
 	SignalParams()
@@ -60,6 +61,7 @@ struct SignalParams
 		// DEEP COPY OF ARRAYS
 		ArrayCopy(bands_percent_data, 				 signal_params.bands_percent_data);
 		ArrayCopy(stochastic_data,    	  		 signal_params.stochastic_data);
+		ArrayCopy(body_ma_data,                signal_params.body_ma_data);
 		// FIXME: Copying array of structures might need a custom deep copy function
 		// ArrayCopy(stoch_market_structure_data, signal_params.stoch_market_structure_data);
 	}

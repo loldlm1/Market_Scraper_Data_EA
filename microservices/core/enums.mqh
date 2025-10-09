@@ -60,5 +60,19 @@ enum OscillatorStructureTypes
 	OSCILLATOR_STRUCTURE_LL = 4  // Lower Low
 };
 
+enum BodyTrendTypes
+{
+	BODY_UNDEFINED = 0,
+	STRONG_BODY_TREND = 1,
+	WEAK_BODY_TREND = 2
+};
+
+enum BodyMATypes
+{
+	BODY_UNDEFINED_MA = 0,
+	BODY_BULLISH_MA = 1,
+	BODY_BEARISH_MA = 2
+};
+
 #endif // _MICROSERVICES_CORE_ENUMS_MQH_
 

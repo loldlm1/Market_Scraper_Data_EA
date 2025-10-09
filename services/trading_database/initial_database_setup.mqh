@@ -230,6 +230,36 @@ bool CreateStatisticsTables()
 
   if(!DatabaseExecute(Database_Instance, "CREATE INDEX IF NOT EXISTS idx_struct_tf_p ON StochasticMarketStructureDB(timeframe, period);")) return false;
 
+  // ────────────────────────────────────────────────────────────────────
+  // Body MA por timeframe
+  string create_body_ma_by_tf =
+    "CREATE TABLE IF NOT EXISTS BodyMADB ("
+    "  signal_id        INTEGER NOT NULL,"
+    "  timeframe        INTEGER NOT NULL,"
+    "  period           INTEGER NOT NULL,"
+    "  body_value_0     REAL    DEFAULT 0,"
+    "  body_value_1     REAL    DEFAULT 0,"
+    "  body_value_2     REAL    DEFAULT 0,"
+    "  body_value_3     REAL    DEFAULT 0,"
+    "  body_ma_0        REAL    DEFAULT 0,"
+    "  body_ma_1        REAL    DEFAULT 0,"
+    "  body_ma_2        REAL    DEFAULT 0,"
+    "  body_ma_3        REAL    DEFAULT 0,"
+    "  body_trend_0     INTEGER DEFAULT 0,"
+    "  body_trend_1     INTEGER DEFAULT 0,"
+    "  body_trend_2     INTEGER DEFAULT 0,"
+    "  body_trend_3     INTEGER DEFAULT 0,"
+    "  body_ma_state_0  INTEGER DEFAULT 0,"
+    "  body_ma_state_1  INTEGER DEFAULT 0,"
+    "  body_ma_state_2  INTEGER DEFAULT 0,"
+    "  body_ma_state_3  INTEGER DEFAULT 0,"
+    "  PRIMARY KEY (signal_id, timeframe, period),"
+    "  FOREIGN KEY(signal_id) REFERENCES SignalParamsDB(signal_id) ON DELETE CASCADE"
+    ");";
+  if(!DatabaseExecute(Database_Instance, create_body_ma_by_tf)) return false;
+
+  if(!DatabaseExecute(Database_Instance, "CREATE INDEX IF NOT EXISTS idx_body_ma_tf_p ON BodyMADB(timeframe, period);")) return false;
+
   return true;
 }
 

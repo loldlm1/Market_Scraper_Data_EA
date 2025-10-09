@@ -18,6 +18,7 @@ IndicatorsHandleInfo ExtBandsIndicatorsHandle[];
 IndicatorsHandleInfo ExtBPercentIndicatorsHandle[];
 IndicatorsHandleInfo ExtStochIndicatorsHandle[];
 IndicatorsHandleInfo ExtStructStochIndicatorsHandle[];
+IndicatorsHandleInfo ExtBodyMAIndicatorsHandle[];
 
 // TOTAL INDICATORS TO LOAD
 int start_bands_indicators_load = 3;
@@ -49,6 +50,7 @@ void LoadAllIndicatorDefinitions()
 	LoadAllBPercentIndicators();
 	LoadAllStochIndicators();
 	LoadAllStructStochIndicators();
+	LoadAllBodyMAIndicators();
 }
 
 // ++ LOAD ALL INDICATORS VARIANTS FUNCTIONS ++
@@ -164,6 +166,32 @@ void LoadAllStructStochIndicators()
 
 			AddElementToArray(ExtStructStochIndicatorsHandle, struct_stoch_indicator_handle_loaded);
 		}
+	}
+}
+
+void LoadAllBodyMAIndicators()
+{
+	for(int i = 0; i < ArraySize(TF_LIST); ++i)
+	{
+		ENUM_TIMEFRAMES trend_timeframe = TF_LIST[i];
+
+		IndicatorsHandleInfo body_ma_indicator_handle_loaded;
+
+		body_ma_indicator_handle_loaded.indicator_period    = 5;
+		body_ma_indicator_handle_loaded.indicator_shift     = 0;
+		body_ma_indicator_handle_loaded.indicator_handle    = iCustom(_Symbol, trend_timeframe, "Examples\\Body_MA.ex5", 5, 0);
+		body_ma_indicator_handle_loaded.indicator_timeframe = trend_timeframe;
+
+		if(body_ma_indicator_handle_loaded.indicator_handle == INVALID_HANDLE)
+		{
+			Print("ERROR LOADING BODY MA INDICATOR: ", EnumToString(trend_timeframe), " | PERIOD: 5");
+			TesterStop();
+			break;
+		}
+
+		Print("LOADED BODY MA INDICATOR SUCCESFULLY: ", EnumToString(trend_timeframe), " | PERIOD: 5");
+
+		AddElementToArray(ExtBodyMAIndicatorsHandle, body_ma_indicator_handle_loaded);
 	}
 }
 
