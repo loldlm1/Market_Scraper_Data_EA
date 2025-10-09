@@ -1,3 +1,8 @@
+//+------------------------------------------------------------------+
+//|                        market_conditions_functions.mqh          |
+//+------------------------------------------------------------------+
+#ifndef _SERVICES_TRADING_MANAGEMENT_MARKET_CONDITIONS_FUNCTIONS_MQH_
+#define _SERVICES_TRADING_MANAGEMENT_MARKET_CONDITIONS_FUNCTIONS_MQH_
 
 bool IsMarketOpen(bool last_check_execution = true)
 {
@@ -46,3 +51,5 @@ bool IsMarketOpen(bool last_check_execution = true)
   lastResult = false;
   return false;
 }
+
+#endif // _SERVICES_TRADING_MANAGEMENT_MARKET_CONDITIONS_FUNCTIONS_MQH_

@@ -1,5 +1,11 @@
 
 //+------------------------------------------------------------------+
+//|                         ea_license_light_version.mqh            |
+//+------------------------------------------------------------------+
+#ifndef _SERVICES_FRONTEND_EA_LICENSE_LIGHT_VERSION_MQH_
+#define _SERVICES_FRONTEND_EA_LICENSE_LIGHT_VERSION_MQH_
+
+//+------------------------------------------------------------------+
 //| Create the License panel                                         |
 //+------------------------------------------------------------------+
 void CreateLicensePanelLive()
@@ -40,3 +46,5 @@ int ChartWindowPosition()
 
 	return eas_total;
 }
+
+#endif // _SERVICES_FRONTEND_EA_LICENSE_LIGHT_VERSION_MQH_

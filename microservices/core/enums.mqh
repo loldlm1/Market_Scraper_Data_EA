@@ -1,17 +1,22 @@
+//+------------------------------------------------------------------+
+//|                                    microservices/core/enums.mqh |
+//+------------------------------------------------------------------+
+#ifndef _MICROSERVICES_CORE_ENUMS_MQH_
+#define _MICROSERVICES_CORE_ENUMS_MQH_
 
 // SIGNAL ENUMERATIONS
 
 enum SignalTypes
 {
 	NO_SIGNAL = 0,
-	BULLISH 	= 1,
-	BEARISH 	= 2
+	BULLISH   = 1,
+	BEARISH   = 2
 };
 
 enum SignalStates
 {
 	WAITING = 0,
-	OPENED 	= 1,
+	OPENED  = 1,
 	TRALING = 2
 };
 
@@ -54,3 +59,6 @@ enum OscillatorStructureTypes
 	OSCILLATOR_STRUCTURE_LH = 3, // Lower High
 	OSCILLATOR_STRUCTURE_LL = 4  // Lower Low
 };
+
+#endif // _MICROSERVICES_CORE_ENUMS_MQH_
+

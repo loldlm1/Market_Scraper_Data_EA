@@ -2,6 +2,8 @@
 //+------------------------------------------------------------------+
 //|                                      tick_signals_manager.mqh    |
 //+------------------------------------------------------------------+
+#ifndef _SERVICES_TRADING_SIGNALS_TICK_SIGNALS_MANAGER_MQH_
+#define _SERVICES_TRADING_SIGNALS_TICK_SIGNALS_MANAGER_MQH_
 
 void CheckTickOpenBullishSignals()
 {
@@ -53,10 +55,12 @@ void CheckTickOpenBearishSignals()
 			// CLOSE THE BEARISH SIGNAL
 			CloseBearishSignal(running_bearish_signals[i]);
 
-			// REMOVE THE BEARISH SIGNAL FROM THE ARRAY
-			RemoveElementFromArray(running_bearish_signals, i);
+		// REMOVE THE BEARISH SIGNAL FROM THE ARRAY
+		RemoveElementFromArray(running_bearish_signals, i);
 
-			continue;
-		}
+		continue;
+	}
 	}
 }
+
+#endif // _SERVICES_TRADING_SIGNALS_TICK_SIGNALS_MANAGER_MQH_

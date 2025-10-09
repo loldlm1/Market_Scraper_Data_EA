@@ -1,3 +1,9 @@
+//+------------------------------------------------------------------+
+//|                            database_signal_wrapper.mqh          |
+//+------------------------------------------------------------------+
+#ifndef _SERVICES_TRADING_DATABASE_DATABASE_SIGNAL_WRAPPER_MQH_
+#define _SERVICES_TRADING_DATABASE_DATABASE_SIGNAL_WRAPPER_MQH_
+
 // ───────────────────────────────────────────────────────────────────────
 // Helpers de formato/escape
 // ───────────────────────────────────────────────────────────────────────
@@ -502,3 +508,5 @@ bool SaveFullSignalTransaction(SignalParams &signal_params)
   DatabaseExecute(Database_Instance, "ROLLBACK;");
   return false;
 }
+
+#endif // _SERVICES_TRADING_DATABASE_DATABASE_SIGNAL_WRAPPER_MQH_

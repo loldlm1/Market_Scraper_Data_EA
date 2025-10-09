@@ -1,6 +1,8 @@
 //+------------------------------------------------------------------+
-//|               TradingTools/base_structures.mqh                    |
+//|                          microservices/core/base_structures.mqh |
 //+------------------------------------------------------------------+
+#ifndef _MICROSERVICES_CORE_BASE_STRUCTURES_MQH_
+#define _MICROSERVICES_CORE_BASE_STRUCTURES_MQH_
 
 struct IndicatorsHandleInfo
 {
@@ -21,3 +23,6 @@ struct IndicatorsHandleInfo
     indicator_timeframe     = PERIOD_CURRENT;
   }
 };
+
+#endif // _MICROSERVICES_CORE_BASE_STRUCTURES_MQH_
+

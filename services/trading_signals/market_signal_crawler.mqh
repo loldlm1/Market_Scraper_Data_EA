@@ -2,6 +2,8 @@
 //+------------------------------------------------------------------+
 //|                                       market_signal_scrapper.mqh |
 //+------------------------------------------------------------------+
+#ifndef _SERVICES_TRADING_SIGNALS_MARKET_SIGNAL_CRAWLER_MQH_
+#define _SERVICES_TRADING_SIGNALS_MARKET_SIGNAL_CRAWLER_MQH_
 
 SignalParams running_bullish_signals[];
 SignalParams running_bearish_signals[];
@@ -127,3 +129,5 @@ void SetTFStochasticMarketStructureDataToSignalParams(SignalParams &signal_param
 		AddElementToArray(signal_params.stoch_market_structure_data, stoch_market_structure_data);
 	}
 }
+
+#endif // _SERVICES_TRADING_SIGNALS_MARKET_SIGNAL_CRAWLER_MQH_

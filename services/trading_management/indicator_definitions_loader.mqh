@@ -2,6 +2,8 @@
 //+------------------------------------------------------------------+
 //|                                 indicator_definitions_loader.mqh |
 //+------------------------------------------------------------------+
+#ifndef _SERVICES_TRADING_MANAGEMENT_INDICATOR_DEFINITIONS_LOADER_MQH_
+#define _SERVICES_TRADING_MANAGEMENT_INDICATOR_DEFINITIONS_LOADER_MQH_
 
 // GLOBAL SETTINGS
 ENUM_TIMEFRAMES TF_LIST[] =
@@ -161,3 +163,5 @@ void LoadAllStructStochIndicators()
 		}
 	}
 }
+
+#endif // _SERVICES_TRADING_MANAGEMENT_INDICATOR_DEFINITIONS_LOADER_MQH_

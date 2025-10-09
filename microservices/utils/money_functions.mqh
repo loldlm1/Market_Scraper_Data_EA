@@ -1,21 +1,24 @@
+//+------------------------------------------------------------------+
+//|                        microservices/utils/money_functions.mqh |
+//+------------------------------------------------------------------+
+#ifndef _MICROSERVICES_UTILS_MONEY_FUNCTIONS_MQH_
+#define _MICROSERVICES_UTILS_MONEY_FUNCTIONS_MQH_
 
-//+------------------------------------------------------------------+
-//|                                              money_functions.mqh |
-//+------------------------------------------------------------------+
+#include "../core/enums.mqh"
 
 // Funciones relacionadas con cálculos monetarios y de volumen en trading
 
 // Devuelve el profit crudo (sin comisiones ni swaps) usando OrderCalcProfit.
 // Si la divisa de tu cuenta es USD, el resultado estará en dólares.
 double RawProfitUsd(SignalTypes signal_type,
-										double entry_price,
+                    double entry_price,
                     double close_price)
 {
   string use_symbol = _Symbol;
 
   // Lote "más común": 1.0, ajustado a min/max/step del símbolo
   double volume = CommonVolume(use_symbol);
-	bool   is_buy = (signal_type == BULLISH);
+  bool   is_buy = (signal_type == BULLISH);
 
   ENUM_ORDER_TYPE order_type = is_buy ? ORDER_TYPE_BUY : ORDER_TYPE_SELL;
 
@@ -55,3 +58,6 @@ double CommonVolume(string symbol)
 
   return volume;
 }
+
+#endif // _MICROSERVICES_UTILS_MONEY_FUNCTIONS_MQH_
+

@@ -14,13 +14,6 @@
 #include <Trade/Trade.mqh>
 #include <Trade/AccountInfo.mqh>
 #include <Trade/SymbolInfo.mqh>
-#include <Generic/HashMap.mqh>
-#include <Trade/DealInfo.mqh>
-#include <Trade/HistoryOrderInfo.mqh>
-#include <JAson.mqh>
-#include <Math/Stat/Math.mqh>
-#include <RadixSort.mqh>
-#include <MovingAverages.mqh>
 
 // GLOBAL VARIABLES
 CTrade			 g_position;
@@ -43,29 +36,12 @@ input int    Custom_Magic       = 0;
 input double Max_Spread         = 15;
 input double Min_Range_Points   = 15;
 
-// CUSTOM SERVICES - TRADING TOOLS
-#include "services/trading_tools/array_functions.mqh"
-#include "services/trading_tools/miscelaneos.mqh"
-#include "services/trading_tools/signal_enums.mqh"
-#include "services/trading_tools/base_structures.mqh"
-#include "services/trading_tools/money_functions.mqh"
-#include "services/trading_tools/logs_helper.mqh"
-
-// CUSTOM SERVICES - TRADING SIGNALS
-#include "services/trading_signals/signal_params_struct.mqh"
-#include "services/trading_signals/market_signal_crawler.mqh"
-#include "services/trading_signals/tick_signals_manager.mqh"
-
-// CUSTOM SERVICES - TRADING MANAGEMENT
-#include "services/trading_management/market_conditions_functions.mqh"
-#include "services/trading_management/indicator_definitions_loader.mqh"
-
-// CUSTOM SERVICES - TRADING DATABASE
-#include "services/trading_database/initial_database_setup.mqh"
-#include "services/trading_database/database_signal_wrapper.mqh"
-
-// CUSTOM SERVICES - FRONTEND
-#include "services/frontend/ea_license_light_version.mqh"
+// CUSTOM SERVICES - AGGREGATORS
+#include "services/trading_tools.mqh"
+#include "services/trading_signals.mqh"
+#include "services/trading_management.mqh"
+#include "services/trading_database.mqh"
+#include "services/frontend.mqh"
 
 int OnInit()
 {

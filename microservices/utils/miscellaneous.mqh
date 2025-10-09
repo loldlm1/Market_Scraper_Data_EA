@@ -1,9 +1,14 @@
+//+------------------------------------------------------------------+
+//|                        microservices/utils/miscellaneous.mqh   |
+//+------------------------------------------------------------------+
+#ifndef _MICROSERVICES_UTILS_MISCELLANEOUS_MQH_
+#define _MICROSERVICES_UTILS_MISCELLANEOUS_MQH_
+
+#include "../core/enums.mqh"
 
 //+------------------------------------------------------------------+
-//|                                              miscelaneos.mqh     |
+//| ALL FIBONACCI LEVELS FROM 0.0 TO 2000.0                         |
 //+------------------------------------------------------------------+
-
-// ALL FIBONACCI LEVELS FROM 0.0 TO 2000.0
 
 double AllFibonacciLevels[101] = {
   0.0, 23.6, 38.2, 61.8, 78.6, 100.0,
@@ -157,3 +162,6 @@ string SqlEnumValue(const int v, const int enum_min, const int enum_max, const i
   const int out = (v < enum_min || v > enum_max) ? enum_default : v;
   return IntegerToString(out);
 }
+
+#endif // _MICROSERVICES_UTILS_MISCELLANEOUS_MQH_
+

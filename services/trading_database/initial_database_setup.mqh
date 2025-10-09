@@ -1,4 +1,10 @@
 //+------------------------------------------------------------------+
+//|                           initial_database_setup.mqh            |
+//+------------------------------------------------------------------+
+#ifndef _SERVICES_TRADING_DATABASE_INITIAL_DATABASE_SETUP_MQH_
+#define _SERVICES_TRADING_DATABASE_INITIAL_DATABASE_SETUP_MQH_
+
+//+------------------------------------------------------------------+
 //| Constants                                                        |
 //+------------------------------------------------------------------+
 
@@ -257,3 +263,5 @@ void CloseStatsDatabase()
   }
   Database_Initial_Setup = false;
 }
+
+#endif // _SERVICES_TRADING_DATABASE_INITIAL_DATABASE_SETUP_MQH_

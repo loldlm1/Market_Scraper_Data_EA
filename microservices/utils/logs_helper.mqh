@@ -1,8 +1,25 @@
+//+------------------------------------------------------------------+
+//|                          microservices/utils/logs_helper.mqh   |
+//+------------------------------------------------------------------+
+#ifndef _MICROSERVICES_UTILS_LOGS_HELPER_MQH_
+#define _MICROSERVICES_UTILS_LOGS_HELPER_MQH_
+
+#include "../core/enums.mqh"
+
+// Forward declarations - these will be resolved when indicator structures are included
+struct SignalParams;
+struct BandsPercentStructure;
+struct StochasticStructure;
+struct StochasticMarketStructure;
+
+// External globals that will be defined in the main EA or service layer
+extern string g_dataset_id;
+
 // ── Helpers ─────────────────────────────────────────────────────────────
 
 void Log_Custom(string text)
 {
-	if(Enable_Logs) Print(text);
+  if(Enable_Logs) Print(text);
 }
 
 string TimeframeToString(const ENUM_TIMEFRAMES tf)
@@ -215,15 +232,15 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
       PrintFormat("  first:   time = %s  price = %s",
             DtToStr(m.first_structure_time),
             P(m.first_structure_price));
-			PrintFormat("  second:  time = %s  price = %s",
-									DtToStr(m.second_structure_time),
-									P(m.second_structure_price));
-			PrintFormat("  third:   time = %s  price = %s",
-									DtToStr(m.third_structure_time),
-									P(m.third_structure_price));
-			PrintFormat("  fourth:  time = %s  price = %s",
-									DtToStr(m.fourth_structure_time),
-									P(m.fourth_structure_price));
+      PrintFormat("  second:  time = %s  price = %s",
+                  DtToStr(m.second_structure_time),
+                  P(m.second_structure_price));
+      PrintFormat("  third:   time = %s  price = %s",
+                  DtToStr(m.third_structure_time),
+                  P(m.third_structure_price));
+      PrintFormat("  fourth:  time = %s  price = %s",
+                  DtToStr(m.fourth_structure_time),
+                  P(m.fourth_structure_price));
       PrintFormat("  fibo:   first=%.2f  second=%.2f  third=%.2f  fourth=%.2f",
                   m.first_fibonacci_level, m.second_fibonacci_level, m.third_fibonacci_level, m.fourth_fibonacci_level);
       Print("  ────────────────────────────────────────────────────────────────────");
@@ -236,3 +253,6 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
 
   Print("────────────────────────────────────────────────────────────────────────");
 }
+
+#endif // _MICROSERVICES_UTILS_LOGS_HELPER_MQH_
+

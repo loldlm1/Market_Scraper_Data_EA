@@ -2,10 +2,11 @@
 //+------------------------------------------------------------------+
 //|                                         signal_params_struct.mqh |
 //+------------------------------------------------------------------+
+#ifndef _SERVICES_TRADING_SIGNALS_SIGNAL_PARAMS_STRUCT_MQH_
+#define _SERVICES_TRADING_SIGNALS_SIGNAL_PARAMS_STRUCT_MQH_
 
-#include <MarketIndicatorStructures/bands_percent_structure.mqh>
-#include <MarketIndicatorStructures/stochastic_structure.mqh>
-#include <MarketIndicatorStructures/stochastic_market_structure.mqh>
+// Structures are already included by the trading_signals.mqh aggregator
+// No need to include them here to avoid circular dependencies
 
 // TRADING SIGNALS STRUCTURES
 struct SignalParams
@@ -63,3 +64,5 @@ struct SignalParams
 		// ArrayCopy(stoch_market_structure_data, signal_params.stoch_market_structure_data);
 	}
 };
+
+#endif // _SERVICES_TRADING_SIGNALS_SIGNAL_PARAMS_STRUCT_MQH_
