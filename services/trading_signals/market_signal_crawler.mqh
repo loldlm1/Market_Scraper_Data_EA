@@ -54,6 +54,7 @@ void DetectBullishSignal()
 	SetTFBandsPercentDataToSignalParams(signal_bullish);
 	SetTFStochasticDataToSignalParams(signal_bullish);
 	SetTFStochasticMarketStructureDataToSignalParams(signal_bullish);
+	SetTFBodyMADataToSignalParams(signal_bullish);
 
 	// OPEN THE BULLISH SIGNAL TO THE MARKET
 	// ...
@@ -77,6 +78,7 @@ void DetectBearishSignal()
 	SetTFBandsPercentDataToSignalParams(signal_bearish);
 	SetTFStochasticDataToSignalParams(signal_bearish);
 	SetTFStochasticMarketStructureDataToSignalParams(signal_bearish);
+	SetTFBodyMADataToSignalParams(signal_bearish);
 
 	// OPEN THE BEARISH SIGNAL TO THE MARKET
 	// ...
@@ -226,6 +228,52 @@ void SetTFStochasticMarketStructureDataToSignalParams(SignalParams &signal_param
 		stoch_market_structure_data = StochasticMarketStructure();
 		stoch_market_structure_data.InitStochMarketStructureValues(ExtStructStochIndicatorsHandle[i]);
 		AddElementToArray(signal_params.stoch_market_structure_data, stoch_market_structure_data);
+	}
+}
+
+void SetTFBodyMADataToSignalParams(SignalParams &signal_params)
+{
+	// Iterate over each timeframe's Body MA indicator handle in ExtBodyMAIndicatorsHandle
+	for(int i = 0; i < ArraySize(ExtBodyMAIndicatorsHandle); i++)
+	{
+		ENUM_TIMEFRAMES tf = ExtBodyMAIndicatorsHandle[i].indicator_timeframe;
+		
+		// Calculate the correct shift based on entry_time
+		int correct_shift = GetShiftForEntryTime(signal_params.entry_time, tf);
+		
+		// Verification logging for M1 only
+		if(Enable_Verification_Logs && tf == PERIOD_M1)
+		{
+			datetime current_time = iTime(_Symbol, tf, 0);
+			datetime shift_time = iTime(_Symbol, tf, correct_shift);
+			PrintFormat("[TIMING-CHECK] BodyMA TF=%s | Current time: %s | Entry time: %s | Calculated shift: %d | Shift time: %s",
+			            TimeframeToString(tf),
+			            TimeToString(current_time, TIME_DATE|TIME_MINUTES),
+			            TimeToString(signal_params.entry_time, TIME_DATE|TIME_MINUTES),
+			            correct_shift,
+			            TimeToString(shift_time, TIME_DATE|TIME_MINUTES));
+			
+			// Verify match
+			if(shift_time == signal_params.entry_time)
+			{
+				Print("[OK] Shift time matches entry_time ✓");
+			}
+			else
+			{
+				PrintFormat("[WARNING] Shift time mismatch! Expected: %s, Got: %s",
+				            TimeToString(signal_params.entry_time, TIME_DATE|TIME_MINUTES),
+				            TimeToString(shift_time, TIME_DATE|TIME_MINUTES));
+			}
+		}
+		
+		BodyMAStructure body_ma_data;
+		body_ma_data = BodyMAStructure();
+		body_ma_data.InitBodyMAStructureValues(ExtBodyMAIndicatorsHandle[i], correct_shift);
+		
+		// Validate data corresponds to entry_time
+		ValidateBodyMADataOrder(body_ma_data, signal_params.entry_time);
+		
+		AddElementToArray(signal_params.body_ma_data, body_ma_data);
 	}
 }
 

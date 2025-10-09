@@ -11,6 +11,7 @@ struct SignalParams;
 struct BandsPercentStructure;
 struct StochasticStructure;
 struct StochasticMarketStructure;
+struct BodyMAStructure;
 
 // External globals that will be defined in the main EA or service layer
 extern string g_dataset_id;
@@ -79,6 +80,28 @@ string SignalTypeToString(const SignalTypes s)
 string SignalStateToString(const SignalStates st)
 {
   return StringFormat("STATE(%s)", EnumToString(st));
+}
+
+string BodyTrendTypeToString(const BodyTrendTypes t)
+{
+  switch (t)
+  {
+    case BODY_UNDEFINED:     return "BODY_UNDEFINED";
+    case STRONG_BODY_TREND:  return "STRONG_BODY_TREND";
+    case WEAK_BODY_TREND:    return "WEAK_BODY_TREND";
+  }
+  return StringFormat("BODY_TREND(%d)", (int)t);
+}
+
+string BodyMATypeToString(const BodyMATypes t)
+{
+  switch (t)
+  {
+    case BODY_UNDEFINED_MA: return "BODY_UNDEFINED_MA";
+    case BODY_BULLISH_MA:   return "BODY_BULLISH_MA";
+    case BODY_BEARISH_MA:   return "BODY_BEARISH_MA";
+  }
+  return StringFormat("BODY_MA(%d)", (int)t);
 }
 
 string DtToStr(const datetime t)
@@ -245,6 +268,80 @@ bool ValidateStochasticDataOrder(const StochasticStructure &stoch_data, datetime
   }
 }
 
+bool ValidateBodyMADataOrder(const BodyMAStructure &body_ma_data, datetime entry_time = 0)
+{
+  // Only validate M1 timeframe when verification logs are enabled
+  if(!Enable_Verification_Logs || body_ma_data.indicator_timeframe != PERIOD_M1) return true;
+  
+  // If entry_time provided, validate that data corresponds to entry_time candle
+  // Otherwise just validate the order
+  if(entry_time > 0)
+  {
+    // Find shift for entry_time
+    int entry_shift = 0;
+    for(int s = 0; s < 100; s++)
+    {
+      if(iTime(_Symbol, body_ma_data.indicator_timeframe, s) == entry_time)
+      {
+        entry_shift = s;
+        break;
+      }
+    }
+    
+    // Get expected timestamps
+    datetime expected_time_0 = iTime(_Symbol, body_ma_data.indicator_timeframe, entry_shift);
+    datetime expected_time_1 = iTime(_Symbol, body_ma_data.indicator_timeframe, entry_shift + 1);
+    datetime expected_time_2 = iTime(_Symbol, body_ma_data.indicator_timeframe, entry_shift + 2);
+    datetime expected_time_3 = iTime(_Symbol, body_ma_data.indicator_timeframe, entry_shift + 3);
+    
+    // Verify the first timestamp matches entry_time
+    bool valid = (expected_time_0 == entry_time);
+    
+    if(valid)
+    {
+      PrintFormat("[OK] BodyMA data matches entry_time for TF=%s: entry=%s, data_times=[%s, %s, %s, %s]",
+                  TimeframeToString(body_ma_data.indicator_timeframe),
+                  TimeToString(entry_time, TIME_DATE|TIME_MINUTES),
+                  TimeToString(expected_time_0, TIME_MINUTES),
+                  TimeToString(expected_time_1, TIME_MINUTES),
+                  TimeToString(expected_time_2, TIME_MINUTES),
+                  TimeToString(expected_time_3, TIME_MINUTES));
+    }
+    else
+    {
+      PrintFormat("[ERROR] BodyMA data MISMATCH with entry_time for TF=%s! entry=%s, shift=%d, shift_time=%s",
+                  TimeframeToString(body_ma_data.indicator_timeframe),
+                  TimeToString(entry_time, TIME_DATE|TIME_MINUTES),
+                  entry_shift,
+                  TimeToString(expected_time_0, TIME_DATE|TIME_MINUTES));
+    }
+    
+    return valid;
+  }
+  else
+  {
+    // Legacy validation - just check order
+    datetime time_0 = iTime(_Symbol, body_ma_data.indicator_timeframe, 0);
+    datetime time_1 = iTime(_Symbol, body_ma_data.indicator_timeframe, 1);
+    datetime time_2 = iTime(_Symbol, body_ma_data.indicator_timeframe, 2);
+    datetime time_3 = iTime(_Symbol, body_ma_data.indicator_timeframe, 3);
+    
+    bool order_valid = (time_0 > time_1) && (time_1 > time_2) && (time_2 > time_3);
+    
+    if(order_valid)
+    {
+      PrintFormat("[OK] BodyMA timestamp order VALID for TF=%s: %s > %s > %s > %s",
+                  TimeframeToString(body_ma_data.indicator_timeframe),
+                  TimeToString(time_0, TIME_DATE|TIME_MINUTES),
+                  TimeToString(time_1, TIME_DATE|TIME_MINUTES),
+                  TimeToString(time_2, TIME_DATE|TIME_MINUTES),
+                  TimeToString(time_3, TIME_DATE|TIME_MINUTES));
+    }
+    
+    return order_valid;
+  }
+}
+
 // ── Logger filtrado por timeframe ───────────────────────────────────────
 
 void LogSignalParamsForTF(const SignalParams &signal_params,
@@ -256,6 +353,7 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
   const int n_bands  = ArraySize(signal_params.bands_percent_data);
   const int n_stoch  = ArraySize(signal_params.stochastic_data);
   const int n_struct = ArraySize(signal_params.stoch_market_structure_data);
+  const int n_body_ma = ArraySize(signal_params.body_ma_data);
 
   Print("────────────────────────────────────────────────────────────────────────");
   PrintFormat("SIGNAL PARAMS  [TF=%s]  [DATASET_ID=%s]", tf_str, g_dataset_id);
@@ -273,8 +371,8 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
   PrintFormat(" entry_time=%s  close_time=%s",
               DtToStr(signal_params.entry_time),
               DtToStr(signal_params.close_time));
-  PrintFormat(" arrays: bands=%d  stochastic=%d  stoch_struct=%d",
-              n_bands, n_stoch, n_struct);
+  PrintFormat(" arrays: bands=%d  stochastic=%d  stoch_struct=%d  body_ma=%d",
+              n_bands, n_stoch, n_struct, n_body_ma);
   Print("────────────────────────────────────────────────────────────────────────");
 
   // BandsPercentStructure
@@ -413,6 +511,62 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
       if (max_slots > 0 && printed >= max_slots) break;
     }
     if (!any) PrintFormat("Stochastic: <no data for TF=%s>", tf_str);
+  }
+
+  // BodyMAStructure
+  {
+    int printed = 0;
+    bool any = false;
+    for (int i = 0; i < n_body_ma; ++i)
+    {
+      const BodyMAStructure bm = signal_params.body_ma_data[i];
+      if(bm.indicator_timeframe != timeframe) continue;
+      any = true;
+
+      // Get timestamps based on entry_time (what the stored data should represent)
+      // Find the shift for entry_time, then get timestamps for that shift and following ones
+      int entry_shift = 0;
+      for(int sh = 0; sh < 100; sh++)
+      {
+        if(iTime(_Symbol, timeframe, sh) == signal_params.entry_time)
+        {
+          entry_shift = sh;
+          break;
+        }
+      }
+      
+      datetime time_0 = iTime(_Symbol, timeframe, entry_shift);     // entry_time candle
+      datetime time_1 = iTime(_Symbol, timeframe, entry_shift + 1); // 1 candle before entry_time
+      datetime time_2 = iTime(_Symbol, timeframe, entry_shift + 2); // 2 candles before entry_time
+      datetime time_3 = iTime(_Symbol, timeframe, entry_shift + 3); // 3 candles before entry_time
+      
+      PrintFormat("▼ BodyMA[%d] (tf = %s)  (period = %d)", i, tf_str, bm.indicator_period);
+      PrintFormat("  body_value:  [%s@%s, %s@%s, %s@%s, %s@%s]",
+                  P(bm.body_value_0), TimeToString(time_0, TIME_MINUTES),
+                  P(bm.body_value_1), TimeToString(time_1, TIME_MINUTES),
+                  P(bm.body_value_2), TimeToString(time_2, TIME_MINUTES),
+                  P(bm.body_value_3), TimeToString(time_3, TIME_MINUTES));
+      PrintFormat("  body_ma:     [%s@%s, %s@%s, %s@%s, %s@%s]",
+                  P(bm.body_ma_0), TimeToString(time_0, TIME_MINUTES),
+                  P(bm.body_ma_1), TimeToString(time_1, TIME_MINUTES),
+                  P(bm.body_ma_2), TimeToString(time_2, TIME_MINUTES),
+                  P(bm.body_ma_3), TimeToString(time_3, TIME_MINUTES));
+      PrintFormat("  body_trend:  [%s, %s, %s, %s]",
+                  BodyTrendTypeToString(bm.body_trend_0),
+                  BodyTrendTypeToString(bm.body_trend_1),
+                  BodyTrendTypeToString(bm.body_trend_2),
+                  BodyTrendTypeToString(bm.body_trend_3));
+      PrintFormat("  body_ma_state:[%s, %s, %s, %s]",
+                  BodyMATypeToString(bm.body_ma_state_0),
+                  BodyMATypeToString(bm.body_ma_state_1),
+                  BodyMATypeToString(bm.body_ma_state_2),
+                  BodyMATypeToString(bm.body_ma_state_3));
+      Print("  ────────────────────────────────────────────────────────────────────");
+
+      ++printed;
+      if (max_slots > 0 && printed >= max_slots) break;
+    }
+    if (!any) PrintFormat("BodyMA: <no data for TF=%s>", tf_str);
   }
 
   // StochasticMarketStructure

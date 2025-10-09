@@ -8,6 +8,7 @@
 #include "../microservices/indicators/bands_percent_indicator.mqh"
 #include "../microservices/indicators/stochastic_indicator.mqh"
 #include "../microservices/indicators/stochastic_market_indicator.mqh"
+#include "../microservices/indicators/body_ma_indicator.mqh"
 
 // SIGNAL SERVICE FILES
 #include "trading_signals/signal_params_struct.mqh"

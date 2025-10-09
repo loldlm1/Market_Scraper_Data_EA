@@ -400,6 +400,68 @@ bool InsertStochByTF(const long signal_id, StochasticStructure &stoch_arr[])
   return true;
 }
 
+bool InsertBodyMAByTF(const long signal_id, BodyMAStructure &body_ma_arr[])
+{
+  const int total = ArraySize(body_ma_arr);
+  if(total <= 0) return true;
+
+  for(int i = 0; i < total; ++i)
+  {
+    BodyMAStructure body_ma_data = body_ma_arr[i];
+
+    // Parte 1: columnas
+    string query_columns =
+      "INSERT OR IGNORE INTO BodyMADB("
+      "signal_id, "
+      "timeframe, "
+      "period, "
+      "body_value_0, body_value_1, body_value_2, body_value_3, "
+      "body_ma_0, body_ma_1, body_ma_2, body_ma_3, "
+      "body_trend_0, body_trend_1, body_trend_2, body_trend_3, "
+      "body_ma_state_0, body_ma_state_1, body_ma_state_2, body_ma_state_3"
+      ") ";
+
+    // Parte 2: valores
+    string query_values = "VALUES (";
+    query_values += IntegerToString((long)signal_id) + ", ";
+    query_values += IntegerToString((int)body_ma_data.indicator_timeframe) + ", ";
+    query_values += IntegerToString((int)body_ma_data.indicator_period) + ", ";
+
+    query_values += DoubleToString(body_ma_data.body_value_0, _Digits) + ", ";
+    query_values += DoubleToString(body_ma_data.body_value_1, _Digits) + ", ";
+    query_values += DoubleToString(body_ma_data.body_value_2, _Digits) + ", ";
+    query_values += DoubleToString(body_ma_data.body_value_3, _Digits) + ", ";
+
+    query_values += DoubleToString(body_ma_data.body_ma_0, _Digits) + ", ";
+    query_values += DoubleToString(body_ma_data.body_ma_1, _Digits) + ", ";
+    query_values += DoubleToString(body_ma_data.body_ma_2, _Digits) + ", ";
+    query_values += DoubleToString(body_ma_data.body_ma_3, _Digits) + ", ";
+
+    query_values += IntegerToString((int)body_ma_data.body_trend_0) + ", ";
+    query_values += IntegerToString((int)body_ma_data.body_trend_1) + ", ";
+    query_values += IntegerToString((int)body_ma_data.body_trend_2) + ", ";
+    query_values += IntegerToString((int)body_ma_data.body_trend_3) + ", ";
+
+    query_values += IntegerToString((int)body_ma_data.body_ma_state_0) + ", ";
+    query_values += IntegerToString((int)body_ma_data.body_ma_state_1) + ", ";
+    query_values += IntegerToString((int)body_ma_data.body_ma_state_2) + ", ";
+    query_values += IntegerToString((int)body_ma_data.body_ma_state_3);
+
+    query_values += ");";
+
+    const string insert_sql = query_columns + query_values;
+
+    if(!DatabaseExecute(Database_Instance, insert_sql))
+    {
+      WriteToFile("query_debug.txt", insert_sql);
+      Print("InsertBodyMAByTF: insert failed: ", GetLastError());
+      TesterStop();
+      return false;
+    }
+  }
+  return true;
+}
+
 bool InsertStochStructByTF(const long signal_id, StochasticMarketStructure &ms_arr[])
 {
   const int total = ArraySize(ms_arr);
@@ -511,6 +573,7 @@ bool SaveFullSignalTransaction(SignalParams &signal_params)
   signal_data_stored = signal_data_stored && InsertBandsByTF(signal_id, signal_params.bands_percent_data);
   signal_data_stored = signal_data_stored && InsertStochByTF(signal_id, signal_params.stochastic_data);
   signal_data_stored = signal_data_stored && InsertStochStructByTF(signal_id, signal_params.stoch_market_structure_data);
+  signal_data_stored = signal_data_stored && InsertBodyMAByTF(signal_id, signal_params.body_ma_data);
 
   if(signal_data_stored)
   {
