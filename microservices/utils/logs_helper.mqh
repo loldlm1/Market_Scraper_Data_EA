@@ -95,6 +95,156 @@ string P(const double v, const int digits = -1)
   return DoubleToString(v, use_digits);
 }
 
+// ── Validation Functions ────────────────────────────────────────────────
+
+bool ValidateBandsPercentDataOrder(const BandsPercentStructure &bands_data, datetime entry_time = 0)
+{
+  // Only validate M1 timeframe when verification logs are enabled
+  if(!Enable_Verification_Logs || bands_data.indicator_timeframe != PERIOD_M1) return true;
+  
+  // If entry_time provided, validate that data corresponds to entry_time candle
+  // Otherwise just validate the order
+  if(entry_time > 0)
+  {
+    // Find shift for entry_time
+    int entry_shift = 0;
+    for(int s = 0; s < 100; s++)
+    {
+      if(iTime(_Symbol, bands_data.indicator_timeframe, s) == entry_time)
+      {
+        entry_shift = s;
+        break;
+      }
+    }
+    
+    // Get expected timestamps
+    datetime expected_time_0 = iTime(_Symbol, bands_data.indicator_timeframe, entry_shift);
+    datetime expected_time_1 = iTime(_Symbol, bands_data.indicator_timeframe, entry_shift + 1);
+    datetime expected_time_2 = iTime(_Symbol, bands_data.indicator_timeframe, entry_shift + 2);
+    datetime expected_time_3 = iTime(_Symbol, bands_data.indicator_timeframe, entry_shift + 3);
+    
+    // Verify the first timestamp matches entry_time
+    bool valid = (expected_time_0 == entry_time);
+    
+    if(valid)
+    {
+      PrintFormat("[OK] BandsPct data matches entry_time for TF=%s: entry=%s, data_times=[%s, %s, %s, %s]",
+                  TimeframeToString(bands_data.indicator_timeframe),
+                  TimeToString(entry_time, TIME_DATE|TIME_MINUTES),
+                  TimeToString(expected_time_0, TIME_MINUTES),
+                  TimeToString(expected_time_1, TIME_MINUTES),
+                  TimeToString(expected_time_2, TIME_MINUTES),
+                  TimeToString(expected_time_3, TIME_MINUTES));
+    }
+    else
+    {
+      PrintFormat("[ERROR] BandsPct data MISMATCH with entry_time for TF=%s! entry=%s, shift=%d, shift_time=%s",
+                  TimeframeToString(bands_data.indicator_timeframe),
+                  TimeToString(entry_time, TIME_DATE|TIME_MINUTES),
+                  entry_shift,
+                  TimeToString(expected_time_0, TIME_DATE|TIME_MINUTES));
+    }
+    
+    return valid;
+  }
+  else
+  {
+    // Legacy validation - just check order
+    datetime time_0 = iTime(_Symbol, bands_data.indicator_timeframe, 0);
+    datetime time_1 = iTime(_Symbol, bands_data.indicator_timeframe, 1);
+    datetime time_2 = iTime(_Symbol, bands_data.indicator_timeframe, 2);
+    datetime time_3 = iTime(_Symbol, bands_data.indicator_timeframe, 3);
+    
+    bool order_valid = (time_0 > time_1) && (time_1 > time_2) && (time_2 > time_3);
+    
+    if(order_valid)
+    {
+      PrintFormat("[OK] BandsPct timestamp order VALID for TF=%s: %s > %s > %s > %s",
+                  TimeframeToString(bands_data.indicator_timeframe),
+                  TimeToString(time_0, TIME_DATE|TIME_MINUTES),
+                  TimeToString(time_1, TIME_DATE|TIME_MINUTES),
+                  TimeToString(time_2, TIME_DATE|TIME_MINUTES),
+                  TimeToString(time_3, TIME_DATE|TIME_MINUTES));
+    }
+    
+    return order_valid;
+  }
+}
+
+bool ValidateStochasticDataOrder(const StochasticStructure &stoch_data, datetime entry_time = 0)
+{
+  // Only validate M1 timeframe when verification logs are enabled
+  if(!Enable_Verification_Logs || stoch_data.indicator_timeframe != PERIOD_M1) return true;
+  
+  // If entry_time provided, validate that data corresponds to entry_time candle
+  // Otherwise just validate the order
+  if(entry_time > 0)
+  {
+    // Find shift for entry_time
+    int entry_shift = 0;
+    for(int s = 0; s < 100; s++)
+    {
+      if(iTime(_Symbol, stoch_data.indicator_timeframe, s) == entry_time)
+      {
+        entry_shift = s;
+        break;
+      }
+    }
+    
+    // Get expected timestamps
+    datetime expected_time_0 = iTime(_Symbol, stoch_data.indicator_timeframe, entry_shift);
+    datetime expected_time_1 = iTime(_Symbol, stoch_data.indicator_timeframe, entry_shift + 1);
+    datetime expected_time_2 = iTime(_Symbol, stoch_data.indicator_timeframe, entry_shift + 2);
+    datetime expected_time_3 = iTime(_Symbol, stoch_data.indicator_timeframe, entry_shift + 3);
+    
+    // Verify the first timestamp matches entry_time
+    bool valid = (expected_time_0 == entry_time);
+    
+    if(valid)
+    {
+      PrintFormat("[OK] Stochastic data matches entry_time for TF=%s: entry=%s, data_times=[%s, %s, %s, %s]",
+                  TimeframeToString(stoch_data.indicator_timeframe),
+                  TimeToString(entry_time, TIME_DATE|TIME_MINUTES),
+                  TimeToString(expected_time_0, TIME_MINUTES),
+                  TimeToString(expected_time_1, TIME_MINUTES),
+                  TimeToString(expected_time_2, TIME_MINUTES),
+                  TimeToString(expected_time_3, TIME_MINUTES));
+    }
+    else
+    {
+      PrintFormat("[ERROR] Stochastic data MISMATCH with entry_time for TF=%s! entry=%s, shift=%d, shift_time=%s",
+                  TimeframeToString(stoch_data.indicator_timeframe),
+                  TimeToString(entry_time, TIME_DATE|TIME_MINUTES),
+                  entry_shift,
+                  TimeToString(expected_time_0, TIME_DATE|TIME_MINUTES));
+    }
+    
+    return valid;
+  }
+  else
+  {
+    // Legacy validation - just check order
+    datetime time_0 = iTime(_Symbol, stoch_data.indicator_timeframe, 0);
+    datetime time_1 = iTime(_Symbol, stoch_data.indicator_timeframe, 1);
+    datetime time_2 = iTime(_Symbol, stoch_data.indicator_timeframe, 2);
+    datetime time_3 = iTime(_Symbol, stoch_data.indicator_timeframe, 3);
+    
+    bool order_valid = (time_0 > time_1) && (time_1 > time_2) && (time_2 > time_3);
+    
+    if(order_valid)
+    {
+      PrintFormat("[OK] Stochastic timestamp order VALID for TF=%s: %s > %s > %s > %s",
+                  TimeframeToString(stoch_data.indicator_timeframe),
+                  TimeToString(time_0, TIME_DATE|TIME_MINUTES),
+                  TimeToString(time_1, TIME_DATE|TIME_MINUTES),
+                  TimeToString(time_2, TIME_DATE|TIME_MINUTES),
+                  TimeToString(time_3, TIME_DATE|TIME_MINUTES));
+    }
+    
+    return order_valid;
+  }
+}
+
 // ── Logger filtrado por timeframe ───────────────────────────────────────
 
 void LogSignalParamsForTF(const SignalParams &signal_params,
@@ -137,13 +287,34 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
       if(b.indicator_timeframe != timeframe) continue;
       any = true;
 
+      // Get timestamps based on entry_time (what the stored data should represent)
+      // Find the shift for entry_time, then get timestamps for that shift and following ones
+      int entry_shift = 0;
+      for(int s = 0; s < 100; s++)
+      {
+        if(iTime(_Symbol, timeframe, s) == signal_params.entry_time)
+        {
+          entry_shift = s;
+          break;
+        }
+      }
+      
+      datetime time_0 = iTime(_Symbol, timeframe, entry_shift);     // entry_time candle
+      datetime time_1 = iTime(_Symbol, timeframe, entry_shift + 1); // 1 candle before entry_time
+      datetime time_2 = iTime(_Symbol, timeframe, entry_shift + 2); // 2 candles before entry_time
+      datetime time_3 = iTime(_Symbol, timeframe, entry_shift + 3); // 3 candles before entry_time
+      
       PrintFormat("▼ Bands[%d] (tf = %s)  (period = %d)", i, tf_str, b.indicator_period);
-      PrintFormat("  values:      [%s, %s, %s, %s]",
-                  P(b.bands_percent_0, 2), P(b.bands_percent_1, 2),
-                  P(b.bands_percent_2, 2), P(b.bands_percent_3, 2));
-      PrintFormat("  signals:     [%s, %s, %s, %s]",
-                  P(b.bands_percent_signal_0, 2), P(b.bands_percent_signal_1, 2),
-                  P(b.bands_percent_signal_2, 2), P(b.bands_percent_signal_3, 2));
+      PrintFormat("  values:      [%s@%s, %s@%s, %s@%s, %s@%s]",
+                  P(b.bands_percent_0, 2), TimeToString(time_0, TIME_MINUTES),
+                  P(b.bands_percent_1, 2), TimeToString(time_1, TIME_MINUTES),
+                  P(b.bands_percent_2, 2), TimeToString(time_2, TIME_MINUTES),
+                  P(b.bands_percent_3, 2), TimeToString(time_3, TIME_MINUTES));
+      PrintFormat("  signals:     [%s@%s, %s@%s, %s@%s, %s@%s]",
+                  P(b.bands_percent_signal_0, 2), TimeToString(time_0, TIME_MINUTES),
+                  P(b.bands_percent_signal_1, 2), TimeToString(time_1, TIME_MINUTES),
+                  P(b.bands_percent_signal_2, 2), TimeToString(time_2, TIME_MINUTES),
+                  P(b.bands_percent_signal_3, 2), TimeToString(time_3, TIME_MINUTES));
       PrintFormat("  slopes:      [%s, %s, %s, %s]",
                   EnumToString(b.bands_percent_slope_0), EnumToString(b.bands_percent_slope_1),
                   EnumToString(b.bands_percent_slope_2), EnumToString(b.bands_percent_slope_3));
@@ -161,6 +332,18 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
                   SignalTypeToString(b.bands_percent_trend_1),
                   SignalTypeToString(b.bands_percent_trend_2),
                   SignalTypeToString(b.bands_percent_trend_3));
+      PrintFormat("  bb_close:    [%s, %s, %s, %s]",
+                  P(b.bb_close_0, 2), P(b.bb_close_1, 2),
+                  P(b.bb_close_2, 2), P(b.bb_close_3, 2));
+      PrintFormat("  bb_open:     [%s, %s, %s, %s]",
+                  P(b.bb_open_0, 2), P(b.bb_open_1, 2),
+                  P(b.bb_open_2, 2), P(b.bb_open_3, 2));
+      PrintFormat("  bb_high:     [%s, %s, %s, %s]",
+                  P(b.bb_high_0, 2), P(b.bb_high_1, 2),
+                  P(b.bb_high_2, 2), P(b.bb_high_3, 2));
+      PrintFormat("  bb_low:      [%s, %s, %s, %s]",
+                  P(b.bb_low_0, 2), P(b.bb_low_1, 2),
+                  P(b.bb_low_2, 2), P(b.bb_low_3, 2));
       Print("  ────────────────────────────────────────────────────────────────────");
 
       ++printed;
@@ -179,13 +362,34 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
       if(s.indicator_timeframe != timeframe) continue;
       any = true;
 
+      // Get timestamps based on entry_time (what the stored data should represent)
+      // Find the shift for entry_time, then get timestamps for that shift and following ones
+      int entry_shift = 0;
+      for(int sh = 0; sh < 100; sh++)
+      {
+        if(iTime(_Symbol, timeframe, sh) == signal_params.entry_time)
+        {
+          entry_shift = sh;
+          break;
+        }
+      }
+      
+      datetime time_0 = iTime(_Symbol, timeframe, entry_shift);     // entry_time candle
+      datetime time_1 = iTime(_Symbol, timeframe, entry_shift + 1); // 1 candle before entry_time
+      datetime time_2 = iTime(_Symbol, timeframe, entry_shift + 2); // 2 candles before entry_time
+      datetime time_3 = iTime(_Symbol, timeframe, entry_shift + 3); // 3 candles before entry_time
+      
       PrintFormat("▼ Stochastic[%d] (tf = %s)  (period = %d)", i, tf_str, s.indicator_period);
-      PrintFormat("  values:      [%s, %s, %s, %s]",
-                  P(s.stochastic_0, 2), P(s.stochastic_1, 2),
-                  P(s.stochastic_2, 2), P(s.stochastic_3, 2));
-      PrintFormat("  signals:     [%s, %s, %s, %s]",
-                  P(s.stochastic_signal_0, 2), P(s.stochastic_signal_1, 2),
-                  P(s.stochastic_signal_2, 2), P(s.stochastic_signal_3, 2));
+      PrintFormat("  values:      [%s@%s, %s@%s, %s@%s, %s@%s]",
+                  P(s.stochastic_0, 2), TimeToString(time_0, TIME_MINUTES),
+                  P(s.stochastic_1, 2), TimeToString(time_1, TIME_MINUTES),
+                  P(s.stochastic_2, 2), TimeToString(time_2, TIME_MINUTES),
+                  P(s.stochastic_3, 2), TimeToString(time_3, TIME_MINUTES));
+      PrintFormat("  signals:     [%s@%s, %s@%s, %s@%s, %s@%s]",
+                  P(s.stochastic_signal_0, 2), TimeToString(time_0, TIME_MINUTES),
+                  P(s.stochastic_signal_1, 2), TimeToString(time_1, TIME_MINUTES),
+                  P(s.stochastic_signal_2, 2), TimeToString(time_2, TIME_MINUTES),
+                  P(s.stochastic_signal_3, 2), TimeToString(time_3, TIME_MINUTES));
       PrintFormat("  slopes:      [%s, %s, %s, %s]",
                   EnumToString(s.stochastic_slope_0), EnumToString(s.stochastic_slope_1),
                   EnumToString(s.stochastic_slope_2), EnumToString(s.stochastic_slope_3));

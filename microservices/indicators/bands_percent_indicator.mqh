@@ -47,6 +47,23 @@ struct BandsPercentStructure
   SignalTypes bands_percent_trend_1;
   SignalTypes bands_percent_trend_2;
   SignalTypes bands_percent_trend_3;
+  // BB PERCENT OHLC VALUES
+  double bb_close_0;
+  double bb_close_1;
+  double bb_close_2;
+  double bb_close_3;
+  double bb_open_0;
+  double bb_open_1;
+  double bb_open_2;
+  double bb_open_3;
+  double bb_high_0;
+  double bb_high_1;
+  double bb_high_2;
+  double bb_high_3;
+  double bb_low_0;
+  double bb_low_1;
+  double bb_low_2;
+  double bb_low_3;
 
   // DEFAULT CONSTRUCTOR
   BandsPercentStructure()
@@ -81,6 +98,22 @@ struct BandsPercentStructure
     bands_percent_trend_1            = NO_SIGNAL;
     bands_percent_trend_2            = NO_SIGNAL;
     bands_percent_trend_3            = NO_SIGNAL;
+    bb_close_0                       = 0.0;
+    bb_close_1                       = 0.0;
+    bb_close_2                       = 0.0;
+    bb_close_3                       = 0.0;
+    bb_open_0                        = 0.0;
+    bb_open_1                        = 0.0;
+    bb_open_2                        = 0.0;
+    bb_open_3                        = 0.0;
+    bb_high_0                        = 0.0;
+    bb_high_1                        = 0.0;
+    bb_high_2                        = 0.0;
+    bb_high_3                        = 0.0;
+    bb_low_0                         = 0.0;
+    bb_low_1                         = 0.0;
+    bb_low_2                         = 0.0;
+    bb_low_3                         = 0.0;
   }
 
   // COPY CONSTRUCTOR
@@ -116,6 +149,22 @@ struct BandsPercentStructure
     bands_percent_trend_1            = bands_percent_structure.bands_percent_trend_1;
     bands_percent_trend_2            = bands_percent_structure.bands_percent_trend_2;
     bands_percent_trend_3            = bands_percent_structure.bands_percent_trend_3;
+    bb_close_0                       = bands_percent_structure.bb_close_0;
+    bb_close_1                       = bands_percent_structure.bb_close_1;
+    bb_close_2                       = bands_percent_structure.bb_close_2;
+    bb_close_3                       = bands_percent_structure.bb_close_3;
+    bb_open_0                        = bands_percent_structure.bb_open_0;
+    bb_open_1                        = bands_percent_structure.bb_open_1;
+    bb_open_2                        = bands_percent_structure.bb_open_2;
+    bb_open_3                        = bands_percent_structure.bb_open_3;
+    bb_high_0                        = bands_percent_structure.bb_high_0;
+    bb_high_1                        = bands_percent_structure.bb_high_1;
+    bb_high_2                        = bands_percent_structure.bb_high_2;
+    bb_high_3                        = bands_percent_structure.bb_high_3;
+    bb_low_0                         = bands_percent_structure.bb_low_0;
+    bb_low_1                         = bands_percent_structure.bb_low_1;
+    bb_low_2                         = bands_percent_structure.bb_low_2;
+    bb_low_3                         = bands_percent_structure.bb_low_3;
   }
 
   // INITIALIZE STRUCTURE VALUES
@@ -157,6 +206,26 @@ struct BandsPercentStructure
     bands_percent_trend_1        = GetBandsPercentTrend(bands_indicator_handle, index+1);
     bands_percent_trend_2        = GetBandsPercentTrend(bands_indicator_handle, index+2);
     bands_percent_trend_3        = GetBandsPercentTrend(bands_indicator_handle, index+3);
+
+    bb_close_0                   = GetBBCloseValue(bands_indicator_handle, index);
+    bb_close_1                   = GetBBCloseValue(bands_indicator_handle, index+1);
+    bb_close_2                   = GetBBCloseValue(bands_indicator_handle, index+2);
+    bb_close_3                   = GetBBCloseValue(bands_indicator_handle, index+3);
+
+    bb_open_0                    = GetBBOpenValue(bands_indicator_handle, index);
+    bb_open_1                    = GetBBOpenValue(bands_indicator_handle, index+1);
+    bb_open_2                    = GetBBOpenValue(bands_indicator_handle, index+2);
+    bb_open_3                    = GetBBOpenValue(bands_indicator_handle, index+3);
+
+    bb_high_0                    = GetBBHighValue(bands_indicator_handle, index);
+    bb_high_1                    = GetBBHighValue(bands_indicator_handle, index+1);
+    bb_high_2                    = GetBBHighValue(bands_indicator_handle, index+2);
+    bb_high_3                    = GetBBHighValue(bands_indicator_handle, index+3);
+
+    bb_low_0                     = GetBBLowValue(bands_indicator_handle, index);
+    bb_low_1                     = GetBBLowValue(bands_indicator_handle, index+1);
+    bb_low_2                     = GetBBLowValue(bands_indicator_handle, index+2);
+    bb_low_3                     = GetBBLowValue(bands_indicator_handle, index+3);
   }
 
   // ++ BANDS PERCENT INDICATOR FUNCTIONS ++
@@ -173,7 +242,20 @@ struct BandsPercentStructure
     ArraySetAsSeries(bands_percent_value, true);
 
     // ROUNDS TO 2 DECIMALS FOR PERCENTAGE VALUES
-    return(NormalizeDouble(bands_percent_value[index], 2));
+    double value = NormalizeDouble(bands_percent_value[index], 2);
+    
+    // TIMESTAMP VERIFICATION LOGGING (M1 ONLY)
+    if(Enable_Verification_Logs && bands_indicator_handle.indicator_timeframe == PERIOD_M1)
+    {
+      datetime candle_time = iTime(_Symbol, bands_indicator_handle.indicator_timeframe, index);
+      PrintFormat("[VERIFY-BandsPct] TF=%s, Shift=%d, Time=%s, Value=%.2f", 
+                  TimeframeToString(bands_indicator_handle.indicator_timeframe), 
+                  index, 
+                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES), 
+                  value);
+    }
+    
+    return value;
   }
 
   double GetBandsPercentSignalValue(IndicatorsHandleInfo &bands_indicator_handle, int index)
@@ -188,7 +270,20 @@ struct BandsPercentStructure
     ArraySetAsSeries(bands_percent_signal_value, true);
 
     // ROUNDS TO 2 DECIMALS FOR PERCENTAGE VALUES
-    return(NormalizeDouble(bands_percent_signal_value[index], 2));
+    double value = NormalizeDouble(bands_percent_signal_value[index], 2);
+    
+    // TIMESTAMP VERIFICATION LOGGING (M1 ONLY)
+    if(Enable_Verification_Logs && bands_indicator_handle.indicator_timeframe == PERIOD_M1)
+    {
+      datetime candle_time = iTime(_Symbol, bands_indicator_handle.indicator_timeframe, index);
+      PrintFormat("[VERIFY-BandsPctSignal] TF=%s, Shift=%d, Time=%s, Value=%.2f", 
+                  TimeframeToString(bands_indicator_handle.indicator_timeframe), 
+                  index, 
+                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES), 
+                  value);
+    }
+    
+    return value;
   }
 
   SlopeTypes GetBandsPercentSlope(IndicatorsHandleInfo &bands_indicator_handle, int index)
@@ -262,6 +357,118 @@ struct BandsPercentStructure
     if(bands_percent_value < bands_percent_signal_value) return(BEARISH);
 
     return(NO_SIGNAL);
+  }
+
+  double GetBBCloseValue(IndicatorsHandleInfo &bands_indicator_handle, int index)
+  {
+    double bb_close_value[];
+
+    if(CopyBuffer(bands_indicator_handle.indicator_handle, 7, 0, index+1, bb_close_value) <= 0)
+    {
+      Print("ERROR READING BB CLOSE INDICATOR DATA");
+    }
+
+    ArraySetAsSeries(bb_close_value, true);
+
+    // ROUNDS TO 2 DECIMALS FOR PERCENTAGE VALUES
+    double value = NormalizeDouble(bb_close_value[index], 2);
+    
+    // TIMESTAMP VERIFICATION LOGGING (M1 ONLY)
+    if(Enable_Verification_Logs && bands_indicator_handle.indicator_timeframe == PERIOD_M1)
+    {
+      datetime candle_time = iTime(_Symbol, bands_indicator_handle.indicator_timeframe, index);
+      PrintFormat("[VERIFY-BB_Close] TF=%s, Shift=%d, Time=%s, Value=%.2f", 
+                  TimeframeToString(bands_indicator_handle.indicator_timeframe), 
+                  index, 
+                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES), 
+                  value);
+    }
+    
+    return value;
+  }
+
+  double GetBBOpenValue(IndicatorsHandleInfo &bands_indicator_handle, int index)
+  {
+    double bb_open_value[];
+
+    if(CopyBuffer(bands_indicator_handle.indicator_handle, 8, 0, index+1, bb_open_value) <= 0)
+    {
+      Print("ERROR READING BB OPEN INDICATOR DATA");
+    }
+
+    ArraySetAsSeries(bb_open_value, true);
+
+    // ROUNDS TO 2 DECIMALS FOR PERCENTAGE VALUES
+    double value = NormalizeDouble(bb_open_value[index], 2);
+    
+    // TIMESTAMP VERIFICATION LOGGING (M1 ONLY)
+    if(Enable_Verification_Logs && bands_indicator_handle.indicator_timeframe == PERIOD_M1)
+    {
+      datetime candle_time = iTime(_Symbol, bands_indicator_handle.indicator_timeframe, index);
+      PrintFormat("[VERIFY-BB_Open] TF=%s, Shift=%d, Time=%s, Value=%.2f", 
+                  TimeframeToString(bands_indicator_handle.indicator_timeframe), 
+                  index, 
+                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES), 
+                  value);
+    }
+    
+    return value;
+  }
+
+  double GetBBHighValue(IndicatorsHandleInfo &bands_indicator_handle, int index)
+  {
+    double bb_high_value[];
+
+    if(CopyBuffer(bands_indicator_handle.indicator_handle, 9, 0, index+1, bb_high_value) <= 0)
+    {
+      Print("ERROR READING BB HIGH INDICATOR DATA");
+    }
+
+    ArraySetAsSeries(bb_high_value, true);
+
+    // ROUNDS TO 2 DECIMALS FOR PERCENTAGE VALUES
+    double value = NormalizeDouble(bb_high_value[index], 2);
+    
+    // TIMESTAMP VERIFICATION LOGGING (M1 ONLY)
+    if(Enable_Verification_Logs && bands_indicator_handle.indicator_timeframe == PERIOD_M1)
+    {
+      datetime candle_time = iTime(_Symbol, bands_indicator_handle.indicator_timeframe, index);
+      PrintFormat("[VERIFY-BB_High] TF=%s, Shift=%d, Time=%s, Value=%.2f", 
+                  TimeframeToString(bands_indicator_handle.indicator_timeframe), 
+                  index, 
+                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES), 
+                  value);
+    }
+    
+    return value;
+  }
+
+  double GetBBLowValue(IndicatorsHandleInfo &bands_indicator_handle, int index)
+  {
+    double bb_low_value[];
+
+    if(CopyBuffer(bands_indicator_handle.indicator_handle, 10, 0, index+1, bb_low_value) <= 0)
+    {
+      Print("ERROR READING BB LOW INDICATOR DATA");
+    }
+
+    ArraySetAsSeries(bb_low_value, true);
+
+    // ROUNDS TO 2 DECIMALS FOR PERCENTAGE VALUES
+    double value = NormalizeDouble(bb_low_value[index], 2);
+    
+    // TIMESTAMP VERIFICATION LOGGING (M1 ONLY)
+    if(Enable_Verification_Logs && bands_indicator_handle.indicator_timeframe == PERIOD_M1)
+    {
+      datetime candle_time = iTime(_Symbol, bands_indicator_handle.indicator_timeframe, index);
+      PrintFormat("[VERIFY-BB_Low] TF=%s, Shift=%d, Time=%s, Value=%.2f", 
+                  TimeframeToString(bands_indicator_handle.indicator_timeframe), 
+                  index, 
+                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES), 
+                  value);
+    }
+    
+    return value;
   }
 };
 
