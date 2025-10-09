@@ -237,7 +237,11 @@ bool InsertBandsByTF(const long signal_id, BandsPercentStructure &bands_arr[])
       "bands_percent_signal_slope_0, bands_percent_signal_slope_1, bands_percent_signal_slope_2, bands_percent_signal_slope_3, "
       "bands_percent_percentil_0, bands_percent_percentil_1, bands_percent_percentil_2, bands_percent_percentil_3, "
       "bands_percent_signal_percentil_0, bands_percent_signal_percentil_1, bands_percent_signal_percentil_2, bands_percent_signal_percentil_3, "
-      "bands_percent_trend_0, bands_percent_trend_1, bands_percent_trend_2, bands_percent_trend_3"
+      "bands_percent_trend_0, bands_percent_trend_1, bands_percent_trend_2, bands_percent_trend_3, "
+      "bb_close_0, bb_close_1, bb_close_2, bb_close_3, "
+      "bb_open_0, bb_open_1, bb_open_2, bb_open_3, "
+      "bb_high_0, bb_high_1, bb_high_2, bb_high_3, "
+      "bb_low_0, bb_low_1, bb_low_2, bb_low_3"
       ") ";
 
     // Parte 2: valores
@@ -279,7 +283,27 @@ bool InsertBandsByTF(const long signal_id, BandsPercentStructure &bands_arr[])
     query_values += IntegerToString((int)band_percent_data.bands_percent_trend_0) + ", ";
     query_values += IntegerToString((int)band_percent_data.bands_percent_trend_1) + ", ";
     query_values += IntegerToString((int)band_percent_data.bands_percent_trend_2) + ", ";
-    query_values += IntegerToString((int)band_percent_data.bands_percent_trend_3);
+    query_values += IntegerToString((int)band_percent_data.bands_percent_trend_3) + ", ";
+
+    query_values += DoubleToString(band_percent_data.bb_close_0, 2) + ", ";
+    query_values += DoubleToString(band_percent_data.bb_close_1, 2) + ", ";
+    query_values += DoubleToString(band_percent_data.bb_close_2, 2) + ", ";
+    query_values += DoubleToString(band_percent_data.bb_close_3, 2) + ", ";
+
+    query_values += DoubleToString(band_percent_data.bb_open_0, 2) + ", ";
+    query_values += DoubleToString(band_percent_data.bb_open_1, 2) + ", ";
+    query_values += DoubleToString(band_percent_data.bb_open_2, 2) + ", ";
+    query_values += DoubleToString(band_percent_data.bb_open_3, 2) + ", ";
+
+    query_values += DoubleToString(band_percent_data.bb_high_0, 2) + ", ";
+    query_values += DoubleToString(band_percent_data.bb_high_1, 2) + ", ";
+    query_values += DoubleToString(band_percent_data.bb_high_2, 2) + ", ";
+    query_values += DoubleToString(band_percent_data.bb_high_3, 2) + ", ";
+
+    query_values += DoubleToString(band_percent_data.bb_low_0, 2) + ", ";
+    query_values += DoubleToString(band_percent_data.bb_low_1, 2) + ", ";
+    query_values += DoubleToString(band_percent_data.bb_low_2, 2) + ", ";
+    query_values += DoubleToString(band_percent_data.bb_low_3, 2);
 
     query_values += ");";
 

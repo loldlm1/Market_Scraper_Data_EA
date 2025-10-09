@@ -20,15 +20,16 @@ IndicatorsHandleInfo ExtStochIndicatorsHandle[];
 IndicatorsHandleInfo ExtStructStochIndicatorsHandle[];
 
 // TOTAL INDICATORS TO LOAD
-int start_bands_indicators_load = 1;
-int total_bands_indicators_load = 5;
-int total_stoch_indicators_load = 3;
+int start_bands_indicators_load = 3;
+int total_bands_indicators_load = 1;
+int total_stoch_indicators_load = 1;
 
 // INPUT SETTINGS
 input group  "+= Developer Debug Settings =+";
-input bool Test_Mode 							 = false;
-input bool Hide_Indicator_Variants = true;
-input bool Enable_Logs   					 = true;
+input bool Test_Mode 							     = false;
+input bool Hide_Indicator_Variants       = true;
+input bool Enable_Logs   					       = true;
+input bool Enable_Verification_Logs      = false;
 
 void LoadAllIndicatorDefinitions()
 {
@@ -57,13 +58,14 @@ void LoadAllBandsIndicators()
 	for(int i = 0; i < ArraySize(TF_LIST); ++i)
 	{
 		ENUM_TIMEFRAMES trend_timeframe = TF_LIST[i];
+		int total_periods_load = start_bands_indicators_load+total_bands_indicators_load;
 
-		for(int i = start_bands_indicators_load; i < total_bands_indicators_load; i++)
+		for(int i = start_bands_indicators_load; i < total_periods_load; i++)
 		{
 			IndicatorsHandleInfo bands_indicator_handle_loaded;
 
 			bands_indicator_handle_loaded.indicator_period 	  = IndicatorPeriods[i];
-			bands_indicator_handle_loaded.indicator_handle    = iCustom(_Symbol, trend_timeframe, "Examples\\BB_Standard.ex5", bands_indicator_handle_loaded.indicator_period, 0, 2.0, MODE_EMA, PRICE_TYPICAL);
+			bands_indicator_handle_loaded.indicator_handle    = iCustom(_Symbol, trend_timeframe, "Examples\\BB_Standard.ex5", bands_indicator_handle_loaded.indicator_period, 0, 2.0, MODE_EMA, PRICE_WEIGHTED);
 			bands_indicator_handle_loaded.indicator_timeframe = trend_timeframe;
 
 			if(bands_indicator_handle_loaded.indicator_handle == INVALID_HANDLE)
@@ -85,13 +87,14 @@ void LoadAllBPercentIndicators()
 	for(int i = 0; i < ArraySize(TF_LIST); ++i)
 	{
 		ENUM_TIMEFRAMES trend_timeframe = TF_LIST[i];
+		int total_periods_load = start_bands_indicators_load+total_bands_indicators_load;
 
-		for(int i = start_bands_indicators_load; i < total_bands_indicators_load; i++)
+		for(int i = start_bands_indicators_load; i < total_periods_load; i++)
 		{
 			IndicatorsHandleInfo bands_indicator_handle_loaded;
 
 			bands_indicator_handle_loaded.indicator_period 	  = IndicatorPeriods[i];
-			bands_indicator_handle_loaded.indicator_handle    = iCustom(_Symbol, trend_timeframe, "Examples\\BB_Percent_Standard.ex5", bands_indicator_handle_loaded.indicator_period, 0, 2.0, 5, MODE_EMA, PRICE_TYPICAL);
+			bands_indicator_handle_loaded.indicator_handle    = iCustom(_Symbol, trend_timeframe, "Examples\\BB_Percent_Standard.ex5", bands_indicator_handle_loaded.indicator_period, 0, 2.0, 5, MODE_EMA, PRICE_WEIGHTED);
 			bands_indicator_handle_loaded.indicator_timeframe = trend_timeframe;
 
 			if(bands_indicator_handle_loaded.indicator_handle == INVALID_HANDLE)
