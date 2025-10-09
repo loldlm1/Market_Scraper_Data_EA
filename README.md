@@ -86,25 +86,50 @@ Bollinger Bands Percent data per signal:
 - `signal_id` (FK): Links to SignalParamsDB
 - `timeframe`: Chart period (e.g., PERIOD_M1, PERIOD_H1)
 - `period`: Indicator period (5, 8, 13, etc.)
-- `bands_percent_0-3`: BB% values for bars 0-3
-- `bands_percent_signal_0-3`: Signal line values
+- `bands_percent_0-3`: BB% values for bars 0-3 (main line)
+- `bands_percent_signal_0-3`: Signal line values for bars 0-3
 - `bands_percent_slope_0-3`: Slope direction (0=none, 1=up, 2=down)
-- `bands_percent_percentil_0-3`: Percentile classification
-- `bands_percent_trend_0-3`: Trend identification
+- `bands_percent_signal_slope_0-3`: Signal line slope direction
+- `bands_percent_percentil_0-3`: Percentile classification (0-100 range)
+- `bands_percent_signal_percentil_0-3`: Signal line percentile classification
+- `bands_percent_trend_0-3`: Trend identification (1=bullish, 2=bearish, 0=none)
+- `bb_close_0-3`: Raw BB% values for Close prices (bars 0-3)
+- `bb_open_0-3`: Raw BB% values for Open prices (bars 0-3)
+- `bb_high_0-3`: Raw BB% values for High prices (bars 0-3)
+- `bb_low_0-3`: Raw BB% values for Low prices (bars 0-3)
+
+**PRIMARY KEY**: `(signal_id, timeframe, period)` - ensures one record per signal/timeframe/period combination
+
+**Data Timing**: All `_0` values represent the entry_time candle, `_1` = 1 bar before entry, `_2` = 2 bars before, `_3` = 3 bars before
 
 ### StochasticDB
 Stochastic indicator data per signal:
-- Similar structure to BandsPercentDB
-- `stochastic_0-3`: Main line values
-- `stochastic_signal_0-3`: Signal line values
-- Slope, percentile, and trend metrics
+- `signal_id` (FK): Links to SignalParamsDB
+- `timeframe`: Chart period (e.g., PERIOD_M1, PERIOD_H1)
+- `period`: Indicator period (5, 8, 13, etc.)
+- `stochastic_0-3`: Main line (%K) values for bars 0-3
+- `stochastic_signal_0-3`: Signal line (%D) values for bars 0-3
+- `stochastic_slope_0-3`: Main line slope direction (0=none, 1=up, 2=down)
+- `stochastic_signal_slope_0-3`: Signal line slope direction
+- `stochastic_percentil_0-3`: Percentile classification (0-100 range)
+- `stochastic_signal_percentil_0-3`: Signal line percentile classification
+- `stochastic_trend_0-3`: Trend identification (1=bullish, 2=bearish, 0=none)
+
+**PRIMARY KEY**: `(signal_id, timeframe, period)` - ensures one record per signal/timeframe/period combination
+
+**Data Timing**: All `_0` values represent the entry_time candle, `_1` = 1 bar before entry, `_2` = 2 bars before, `_3` = 3 bars before
 
 ### StochasticMarketStructureDB
 Market structure analysis based on stochastic:
-- `first/second/third/fourth_structure_type`: Structure patterns (HH, HL, LH, LL)
-- `first/second/third/fourth_structure_time`: Structure timestamps
-- `first/second/third/fourth_structure_price`: Structure price levels
-- `first/second/third/fourth_fibonacci_level`: Fibonacci retracement levels
+- `signal_id` (FK): Links to SignalParamsDB
+- `timeframe`: Chart period (e.g., PERIOD_M1, PERIOD_H1)
+- `period`: Indicator period (5, 8, 13, etc.)
+- `first_structure_type` through `six_structure_type`: Structure patterns (0=EQ, 1=HH, 2=HL, 3=LH, 4=LL)
+- `first_structure_time` through `fourth_structure_time`: Structure timestamps (epoch seconds)
+- `first_structure_price` through `fourth_structure_price`: Structure price levels
+- `first_fibonacci_level` through `fourth_fibonacci_level`: Fibonacci retracement levels (0-100 percentage)
+
+**PRIMARY KEY**: `(signal_id, timeframe, period)` - ensures one record per signal/timeframe/period combination
 
 ## How It Works
 
@@ -119,6 +144,13 @@ Market structure analysis based on stochastic:
 - Detected when Stochastic signal line (bar 1) >= 70 (overbought)
 - Records entry at current BID price
 - Stores all indicator data at the moment of detection
+
+**Data Timing Logic:**
+- `entry_time` is captured at the moment of signal detection (current candle open time)
+- All indicator values (`_0`, `_1`, `_2`, `_3`) are fetched based on the entry_time candle, not the current candle
+- This ensures historical accuracy: if a signal is logged/stored later, the data still reflects the exact market conditions at entry_time
+- The system calculates the correct shift for each timeframe to match the entry_time candle
+- Example: If entry_time = 00:03 and we log at 00:04, the system uses shift=1 to get 00:03 data (not shift=0 which would be 00:04)
 
 ### Data Flow
 
@@ -189,6 +221,7 @@ Market structure analysis based on stochastic:
 - `Test_Mode`: Reduces indicators loaded for faster testing (default: false)
 - `Hide_Indicator_Variants`: Hide indicators from chart (default: true)
 - `Enable_Logs`: Enable detailed logging (default: true)
+- `Enable_Verification_Logs`: Enable detailed verification logs for data timing (default: false)
 
 ## Usage
 
@@ -292,6 +325,55 @@ SELECT
 FROM SignalParamsDB sp
 JOIN StochasticDB s ON sp.signal_id = s.signal_id
 WHERE s.timeframe = 1 AND s.period = 13
+ORDER BY sp.entry_time DESC;
+```
+
+### Analyze BB% with Raw OHLC Prices
+```sql
+SELECT
+  sp.entry_time,
+  sp.signal_type,
+  bp.bands_percent_0,
+  bp.bb_close_0,
+  bp.bb_open_0,
+  bp.bb_high_0,
+  bp.bb_low_0,
+  sp.raw_profit
+FROM SignalParamsDB sp
+JOIN BandsPercentDB bp ON sp.signal_id = bp.signal_id
+WHERE bp.timeframe = 1 AND bp.period = 21
+ORDER BY sp.entry_time DESC;
+```
+
+### Get Complete Signal Data for Machine Learning
+```sql
+SELECT
+  md.symbol,
+  md.name,
+  sp.signal_type,
+  sp.entry_time,
+  sp.entry_price,
+  sp.raw_profit,
+  bp.bands_percent_0,
+  bp.bands_percent_1,
+  bp.bands_percent_2,
+  bp.bands_percent_3,
+  bp.bb_close_0,
+  bp.bb_open_0,
+  bp.bb_high_0,
+  bp.bb_low_0,
+  s.stochastic_0,
+  s.stochastic_signal_0,
+  sm.first_structure_type,
+  sm.first_fibonacci_level
+FROM SignalParamsDB sp
+JOIN MarketDatasetsDB md ON sp.dataset_id = md.dataset_id
+JOIN BandsPercentDB bp ON sp.signal_id = bp.signal_id
+JOIN StochasticDB s ON sp.signal_id = s.signal_id
+JOIN StochasticMarketStructureDB sm ON sp.signal_id = sm.signal_id
+WHERE bp.timeframe = 1 AND bp.period = 21
+  AND s.timeframe = 1 AND s.period = 5
+  AND sm.timeframe = 1 AND sm.period = 5
 ORDER BY sp.entry_time DESC;
 ```
 
