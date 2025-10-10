@@ -30,8 +30,16 @@
         │       ├─► microservices/indicators/stochastic_market_indicator.mqh
         │       │   ├─► microservices/core/enums.mqh
         │       │   ├─► microservices/core/base_structures.mqh
-        │       │   ├─► microservices/utils/array_functions.mqh
-        │       │   └─► microservices/utils/miscellaneous.mqh
+        │       │   ├─► microservices/indicators/extrema_detector.mqh
+        │       │   │   ├─► microservices/core/base_structures.mqh
+        │       │   │   └─► microservices/utils/array_functions.mqh
+        │       │   ├─► microservices/indicators/structure_classifier.mqh
+        │       │   │   ├─► microservices/core/enums.mqh
+        │       │   │   └─► microservices/indicators/extrema_detector.mqh
+        │       │   └─► microservices/indicators/fibonacci_calculator.mqh
+        │       │       ├─► microservices/utils/miscellaneous.mqh
+        │       │       ├─► microservices/indicators/extrema_detector.mqh
+        │       │       └─► microservices/indicators/structure_classifier.mqh
         │       ├─► services/trading_signals/signal_params_struct.mqh
         │       ├─► services/trading_signals/market_signal_crawler.mqh
         │       └─► services/trading_signals/tick_signals_manager.mqh
@@ -75,14 +83,28 @@ microservices/indicators/
 ├── bands_percent_indicator.mqh
 │   ├─► core/enums.mqh
 │   └─► core/base_structures.mqh
+├── body_ma_indicator.mqh
+│   ├─► core/enums.mqh
+│   └─► core/base_structures.mqh
 ├── stochastic_indicator.mqh
 │   ├─► core/enums.mqh
 │   └─► core/base_structures.mqh
-└── stochastic_market_indicator.mqh
+├── extrema_detector.mqh
+│   ├─► core/base_structures.mqh
+│   └─► utils/array_functions.mqh
+├── structure_classifier.mqh
+│   ├─► core/enums.mqh
+│   └─► extrema_detector.mqh
+├── fibonacci_calculator.mqh
+│   ├─► utils/miscellaneous.mqh
+│   ├─► extrema_detector.mqh
+│   └─► structure_classifier.mqh
+└── stochastic_market_indicator.mqh (Refactored Orchestrator)
     ├─► core/enums.mqh
     ├─► core/base_structures.mqh
-    ├─► utils/array_functions.mqh
-    └─► utils/miscellaneous.mqh
+    ├─► extrema_detector.mqh
+    ├─► structure_classifier.mqh
+    └─► fibonacci_calculator.mqh
 ```
 
 ## Include Guard Verification
@@ -97,7 +119,11 @@ All files properly protected with include guards:
 - ✓ `_MICROSERVICES_UTILS_MONEY_FUNCTIONS_MQH_`
 - ✓ `_MICROSERVICES_UTILS_LOGS_HELPER_MQH_`
 - ✓ `_MICROSERVICES_INDICATORS_BANDS_PERCENT_INDICATOR_MQH_`
+- ✓ `_MICROSERVICES_INDICATORS_BODY_MA_INDICATOR_MQH_`
 - ✓ `_MICROSERVICES_INDICATORS_STOCHASTIC_INDICATOR_MQH_`
+- ✓ `_MICROSERVICES_INDICATORS_EXTREMA_DETECTOR_MQH_`
+- ✓ `_MICROSERVICES_INDICATORS_STRUCTURE_CLASSIFIER_MQH_`
+- ✓ `_MICROSERVICES_INDICATORS_FIBONACCI_CALCULATOR_MQH_`
 - ✓ `_MICROSERVICES_INDICATORS_STOCHASTIC_MARKET_INDICATOR_MQH_`
 
 ### Service Aggregators
@@ -135,11 +161,11 @@ No circular dependencies detected in the dependency graph.
 |----------|-------|
 | Microservice Core | 2 |
 | Microservice Utils | 4 |
-| Microservice Indicators | 3 |
+| Microservice Indicators | 7 |
 | Service Aggregators | 5 |
 | Service Implementation Files | 8 |
 | Main EA | 1 |
-| **Total** | **23** |
+| **Total** | **27** |
 
 ## Compilation Order
 

@@ -12,6 +12,8 @@ struct BandsPercentStructure;
 struct StochasticStructure;
 struct StochasticMarketStructure;
 struct BodyMAStructure;
+struct ExtremumStatistics;
+struct OscillatorMarketStructure;
 
 // External globals that will be defined in the main EA or service layer
 extern string g_dataset_id;
@@ -607,6 +609,89 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
       if (max_slots > 0 && printed >= max_slots) break;
     }
     if (!any) PrintFormat("StochMarketStructure: <no data for TF=%s>", tf_str);
+  }
+
+  // ExtremumStatistics (NEW - v1.10)
+  {
+    int printed = 0;
+    bool any = false;
+    for (int i = 0; i < n_struct; ++i)
+    {
+      const StochasticMarketStructure m = signal_params.stoch_market_structure_data[i];
+      if(m.indicator_timeframe != timeframe) continue;
+      
+      int n_extrema = ArraySize(m.extremum_stats);
+      if(n_extrema == 0) continue;
+      
+      any = true;
+
+      PrintFormat("▼ ExtremumStatistics[%d] (tf = %s)  (period = %d)  [%d extrema]", 
+                  i, tf_str, m.indicator_period, n_extrema);
+      
+      // Log first 5 extrema (most recent)
+      int max_log = MathMin(5, n_extrema);
+      for(int j = 0; j < max_log; j++)
+      {
+        const ExtremumStatistics es = m.extremum_stats[j];
+        string type_str = m.os_market_structures[j].is_peak ? "Peak" : "Bottom";
+        double price = m.os_market_structures[j].is_peak ? 
+                       m.os_market_structures[j].extremum_high : 
+                       m.os_market_structures[j].extremum_low;
+        
+        PrintFormat("  [%d] %s @ %s (price=%.5f)", 
+                    es.extremum_index,
+                    type_str,
+                    DtToStr(m.os_market_structures[j].extremum_time),
+                    price);
+        PrintFormat("      INTERN: %.2f%% (ref=%.5f) %s", 
+                    es.intern_fibo_level,
+                    es.intern_reference_price,
+                    es.intern_is_extension ? "[EXTENSION]" : "");
+        
+        if(es.extern_is_active)
+        {
+          // Find timestamps of the reference extrema
+          datetime ref_high_time = 0;
+          datetime ref_low_time = 0;
+          
+          for(int k = 0; k < n_extrema; k++)
+          {
+            if(m.os_market_structures[k].is_peak && 
+               MathAbs(m.os_market_structures[k].extremum_high - es.extern_oldest_high) < 0.00001)
+            {
+              ref_high_time = m.os_market_structures[k].extremum_time;
+            }
+            if(!m.os_market_structures[k].is_peak && 
+               MathAbs(m.os_market_structures[k].extremum_low - es.extern_oldest_low) < 0.00001)
+            {
+              ref_low_time = m.os_market_structures[k].extremum_time;
+            }
+          }
+          
+          PrintFormat("      EXTERN: %.2f%% broken=%d [ACTIVE]",
+                      es.extern_fibo_level,
+                      es.extern_structures_broken);
+          PrintFormat("             Range: H=%.5f @ %s",
+                      es.extern_oldest_high,
+                      ref_high_time > 0 ? DtToStr(ref_high_time) : "unknown");
+          PrintFormat("                    L=%.5f @ %s",
+                      es.extern_oldest_low,
+                      ref_low_time > 0 ? DtToStr(ref_low_time) : "unknown");
+        }
+        
+        PrintFormat("      Structure: %s",
+                    OscillatorStructureTypesToString(es.structure_type));
+      }
+      
+      if(n_extrema > 5)
+        PrintFormat("  ... and %d more extrema (showing first 5 only)", n_extrema - 5);
+      
+      Print("  ────────────────────────────────────────────────────────────────────");
+
+      ++printed;
+      if (max_slots > 0 && printed >= max_slots) break;
+    }
+    if (!any) PrintFormat("ExtremumStatistics: <no data for TF=%s>", tf_str);
   }
 
   Print("────────────────────────────────────────────────────────────────────────");

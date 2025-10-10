@@ -231,6 +231,33 @@ bool CreateStatisticsTables()
   if(!DatabaseExecute(Database_Instance, "CREATE INDEX IF NOT EXISTS idx_struct_tf_p ON StochasticMarketStructureDB(timeframe, period);")) return false;
 
   // ────────────────────────────────────────────────────────────────────
+  // Extremum Statistics (NEW - Dynamic)
+  string create_extremum_stats =
+    "CREATE TABLE IF NOT EXISTS ExtremumStatisticsDB ("
+    "  signal_id                  INTEGER NOT NULL,"
+    "  timeframe                  INTEGER NOT NULL,"
+    "  period                     INTEGER NOT NULL,"
+    "  extremum_index             INTEGER NOT NULL,"
+    "  extremum_time              INTEGER NOT NULL,"
+    "  extremum_price             REAL    NOT NULL,"
+    "  is_peak                    INTEGER NOT NULL,"
+    "  intern_fibo_level          REAL    DEFAULT 0,"
+    "  intern_reference_price     REAL    DEFAULT 0,"
+    "  intern_is_extension        INTEGER DEFAULT 0,"
+    "  extern_fibo_level          REAL    DEFAULT 0,"
+    "  extern_oldest_high         REAL    DEFAULT 0,"
+    "  extern_oldest_low          REAL    DEFAULT 0,"
+    "  extern_structures_broken   INTEGER DEFAULT 0,"
+    "  extern_is_active           INTEGER DEFAULT 0,"
+    "  structure_type             INTEGER DEFAULT 0,"
+    "  PRIMARY KEY (signal_id, timeframe, period, extremum_index),"
+    "  FOREIGN KEY(signal_id) REFERENCES SignalParamsDB(signal_id) ON DELETE CASCADE"
+    ");";
+  if(!DatabaseExecute(Database_Instance, create_extremum_stats)) return false;
+  
+  if(!DatabaseExecute(Database_Instance, "CREATE INDEX IF NOT EXISTS idx_extremum_stats ON ExtremumStatisticsDB(signal_id, timeframe, period);")) return false;
+
+  // ────────────────────────────────────────────────────────────────────
   // Body MA por timeframe
   string create_body_ma_by_tf =
     "CREATE TABLE IF NOT EXISTS BodyMADB ("

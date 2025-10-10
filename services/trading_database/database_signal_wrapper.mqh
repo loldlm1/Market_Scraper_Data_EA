@@ -532,6 +532,80 @@ bool InsertStochStructByTF(const long signal_id, StochasticMarketStructure &ms_a
 }
 
 // ───────────────────────────────────────────────────────────────────────
+// Insert Extremum Statistics (NEW - Dynamic data)                       |
+// ───────────────────────────────────────────────────────────────────────
+bool InsertExtremumStatistics(const long signal_id, StochasticMarketStructure &ms_arr[])
+{
+  const int total = ArraySize(ms_arr);
+  if(total <= 0) return true;
+
+  for(int i = 0; i < total; ++i)
+  {
+    StochasticMarketStructure market_stoch_data = ms_arr[i];
+    int stats_count = ArraySize(market_stoch_data.extremum_stats);
+    
+    // Insert each extremum statistic
+    for(int j = 0; j < stats_count; ++j)
+    {
+      ExtremumStatistics stats = market_stoch_data.extremum_stats[j];
+      OscillatorMarketStructure extremum = market_stoch_data.os_market_structures[j];
+      
+      // Determine extremum price based on type
+      double extremum_price = extremum.is_peak ? extremum.extremum_high : extremum.extremum_low;
+      
+      // Build INSERT query
+      string query_columns =
+        "INSERT OR IGNORE INTO ExtremumStatisticsDB("
+        "signal_id, timeframe, period, extremum_index, "
+        "extremum_time, extremum_price, is_peak, "
+        "intern_fibo_level, intern_reference_price, intern_is_extension, "
+        "extern_fibo_level, extern_oldest_high, extern_oldest_low, "
+        "extern_structures_broken, extern_is_active, structure_type"
+        ") ";
+      
+      string query_values = "VALUES (";
+      query_values += IntegerToString(signal_id) + ", ";
+      query_values += IntegerToString((int)market_stoch_data.indicator_timeframe) + ", ";
+      query_values += IntegerToString((int)market_stoch_data.indicator_period) + ", ";
+      query_values += IntegerToString(stats.extremum_index) + ", ";
+      
+      // Extremum data
+      query_values += SqlEpochValue((long)extremum.extremum_time) + ", ";
+      query_values += SqlPriceValue(extremum_price) + ", ";
+      query_values += (extremum.is_peak ? "1" : "0") + ", ";
+      
+      // EXTREMUM_INTERN stats
+      query_values += SqlFiboValue(stats.intern_fibo_level) + ", ";
+      query_values += SqlPriceValue(stats.intern_reference_price) + ", ";
+      query_values += (stats.intern_is_extension ? "1" : "0") + ", ";
+      
+      // EXTREMUM_EXTERN stats
+      query_values += SqlFiboValue(stats.extern_fibo_level) + ", ";
+      query_values += SqlPriceValue(stats.extern_oldest_high) + ", ";
+      query_values += SqlPriceValue(stats.extern_oldest_low) + ", ";
+      query_values += IntegerToString(stats.extern_structures_broken) + ", ";
+      query_values += (stats.extern_is_active ? "1" : "0") + ", ";
+      
+      // Structure type
+      query_values += SqlEnumValue((int)stats.structure_type, 0, 6, DEF_OSC_STRUCT_TYPE);
+      
+      query_values += ");";
+      
+      const string insert_sql = query_columns + query_values;
+      
+      if(!DatabaseExecute(Database_Instance, insert_sql))
+      {
+        WriteToFile("query_debug.txt", insert_sql);
+        Print("InsertExtremumStatistics: insert failed for index ", j, ", error: ", GetLastError());
+        TesterStop();
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+// ───────────────────────────────────────────────────────────────────────
 // Insert completo con transacción (SignalParamsDB + hijos)							 |
 // ───────────────────────────────────────────────────────────────────────
 bool SaveFullSignalTransaction(SignalParams &signal_params)
@@ -573,6 +647,7 @@ bool SaveFullSignalTransaction(SignalParams &signal_params)
   signal_data_stored = signal_data_stored && InsertBandsByTF(signal_id, signal_params.bands_percent_data);
   signal_data_stored = signal_data_stored && InsertStochByTF(signal_id, signal_params.stochastic_data);
   signal_data_stored = signal_data_stored && InsertStochStructByTF(signal_id, signal_params.stoch_market_structure_data);
+  signal_data_stored = signal_data_stored && InsertExtremumStatistics(signal_id, signal_params.stoch_market_structure_data); // NEW
   signal_data_stored = signal_data_stored && InsertBodyMAByTF(signal_id, signal_params.body_ma_data);
 
   if(signal_data_stored)

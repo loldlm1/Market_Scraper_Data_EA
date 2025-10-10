@@ -6,64 +6,22 @@
 
 #include "../core/enums.mqh"
 #include "../core/base_structures.mqh"
-#include "../utils/array_functions.mqh"
-#include "../utils/miscellaneous.mqh"
+#include "extrema_detector.mqh"
+#include "structure_classifier.mqh"
+#include "fibonacci_calculator.mqh"
+#include "extremum_statistics_calculator.mqh"
 
-// Estructura de precios para niveles de Fibonacci (modo alcista)
-struct FibonacciLevelPrices
-{
-  double entry_level;       // precio del nivel de entrada calculado
-  double entry_next_level;  // precio del siguiente nivel (para TP/gestión)
-
-  // DEFAULT CONSTRUCTOR
-  FibonacciLevelPrices()
-  {
-    entry_level      = 0.0;
-    entry_next_level = 0.0;
-  }
-
-  // COPY CONSTRUCTOR
-  FibonacciLevelPrices(const FibonacciLevelPrices &other)
-  {
-    entry_level      = other.entry_level;
-    entry_next_level = other.entry_next_level;
-  }
-};
-
-// Estructura de un extremo (pico/fondo) del oscilador
-struct OscillatorMarketStructure
-{
-  double   extremum_high;
-  double   extremum_low;
-  double   extremum_stoch;
-  datetime extremum_time;
-
-  // DEFAULT CONSTRUCTOR
-  OscillatorMarketStructure()
-  {
-    extremum_high  = -DBL_MAX;
-    extremum_low   =  DBL_MAX;
-    extremum_stoch = 0.0;
-    extremum_time  = 0;
-  }
-
-  // COPY CONSTRUCTOR
-  OscillatorMarketStructure(const OscillatorMarketStructure &other)
-  {
-    extremum_high  = other.extremum_high;
-    extremum_low   = other.extremum_low;
-    extremum_stoch = other.extremum_stoch;
-    extremum_time  = other.extremum_time;
-  }
-};
-
-// Agregado de estructura estocástica (tipos, niveles y secuencia completa)
+//+------------------------------------------------------------------+
+//| Main structure for Stochastic Market Structure analysis          |
+//| Aggregates extrema, structure types, and Fibonacci levels        |
+//+------------------------------------------------------------------+
 struct StochasticMarketStructure
 {
   // INDICATOR INFO
   ENUM_TIMEFRAMES indicator_timeframe;
   int             indicator_period;
-  // Tipos de las 6 sub-estructuras (según tu cálculo)
+
+  // Tipos de las 6 sub-estructuras
   OscillatorStructureTypes first_structure_type;
   OscillatorStructureTypes second_structure_type;
   OscillatorStructureTypes third_structure_type;
@@ -71,7 +29,7 @@ struct StochasticMarketStructure
   OscillatorStructureTypes fifth_structure_type;
   OscillatorStructureTypes six_structure_type;
 
-  // Datos de la primera sub-estructura que guardas explícitamente
+  // Datos de la primera sub-estructura
   datetime first_structure_time;
   double   first_structure_price;
   datetime second_structure_time;
@@ -81,7 +39,7 @@ struct StochasticMarketStructure
   datetime fourth_structure_time;
   double   fourth_structure_price;
 
-  // Niveles de Fibonacci calculados en tu función
+  // Niveles de Fibonacci calculados
   double first_fibonacci_level;
   double second_fibonacci_level;
   double third_fibonacci_level;
@@ -89,12 +47,17 @@ struct StochasticMarketStructure
 
   // Secuencia completa de extremos detectados
   OscillatorMarketStructure os_market_structures[];
+  
+  // NEW: Dynamic configuration and statistics
+  int extrema_depth_config;           // Configurable depth (default 13)
+  ExtremumStatistics extremum_stats[]; // Dynamic statistics array
 
   // DEFAULT CONSTRUCTOR
   StochasticMarketStructure()
   {
     indicator_timeframe   = PERIOD_CURRENT;
     indicator_period      = 0;
+    extrema_depth_config  = 13;
     first_structure_type  = OSCILLATOR_STRUCTURE_EQ;
     second_structure_type = OSCILLATOR_STRUCTURE_EQ;
     third_structure_type  = OSCILLATOR_STRUCTURE_EQ;
@@ -144,406 +107,168 @@ struct StochasticMarketStructure
     fourth_fibonacci_level = other.fourth_fibonacci_level;
 
     ArrayCopy(os_market_structures, other.os_market_structures);
+    
+    extrema_depth_config  = other.extrema_depth_config;
+    ArrayCopy(extremum_stats, other.extremum_stats);
   }
 
-  // INITIALIZE STRUCTURE VALUES
+  //+------------------------------------------------------------------+
+  //| Initialize all market structure values from indicator            |
+  //| Returns: true if successful, false otherwise                     |
+  //+------------------------------------------------------------------+
   bool InitStochMarketStructureValues(
     IndicatorsHandleInfo &structure_stoch_indicator_handle
   ) {
-    // --- buffers del indicador ---
-    double indicator_extremum_values[];
-    double indicator_peak_values[];
-    double indicator_bottom_values[];
-    double indicator_stoch_extremum_values[];
-    double indicator_main_values[];
+    bool initial_is_bottom = false;
+    bool initial_is_peak   = false;
 
-    // --- variables de trabajo ---
-    int      total_signal_structures = 0;
-    int      structure_peaks_index   = 0;
-    int      structure_bottoms_index = 0;
-
-    datetime time_1                  = 0;
-    double   high_1                  = 0.0;
-    double   low_1                   = 0.0;
-    double   stoch_1                 = 0.0;
-
-    double   signal_low_price                = DBL_MAX;
-    double   signal_high_price               = -DBL_MAX;
-    datetime signal_time_extremum_bottom     = 0;
-    datetime signal_time_extremum_peak       = 0;
-    double   signal_stoch_extremum_bottom    = DBL_MAX;
-    double   signal_stoch_extremum_peak      = -DBL_MAX;
-    double   current_extremum_bottom         = DBL_MAX;
-    double   current_extremum_peak           = -DBL_MAX;
-
-    bool     initial_struct_peak     = false;
-    bool     initial_struct_bottom   = false;
-
-    // --- copiar buffers ---
-    int n_ext  = CopyBuffer(structure_stoch_indicator_handle.indicator_handle, 0, 0, 2333, indicator_extremum_values);
-    int n_peak = CopyBuffer(structure_stoch_indicator_handle.indicator_handle, 1, 0, 2333, indicator_peak_values);
-    int n_bot  = CopyBuffer(structure_stoch_indicator_handle.indicator_handle, 2, 0, 2333, indicator_bottom_values);
-    int n_sext = CopyBuffer(structure_stoch_indicator_handle.indicator_handle, 3, 0, 2333, indicator_stoch_extremum_values);
-    int n_main = CopyBuffer(structure_stoch_indicator_handle.indicator_handle, 4, 0, 2333, indicator_main_values);
-
-    if(n_ext <= 0 || n_peak <= 0 || n_bot <= 0 || n_sext <= 0 || n_main <= 0)
-    {
-      PrintFormat("Failed to copy data from the OSCILLATOR STRUCTURE indicator, error code %d", GetLastError());
-      TesterStop();
+    // STEP 1: Detect extrema from Stochastic Structure indicator
+    if(!DetectMarketExtrema(
+      structure_stoch_indicator_handle,
+      os_market_structures,
+      initial_is_bottom,
+      initial_is_peak,
+      indicator_timeframe,
+      indicator_period
+    )) {
+      return false;
     }
 
-    ArraySetAsSeries(indicator_extremum_values, true);
-    ArraySetAsSeries(indicator_peak_values, true);
-    ArraySetAsSeries(indicator_bottom_values, true);
-    ArraySetAsSeries(indicator_stoch_extremum_values, true);
-    ArraySetAsSeries(indicator_main_values, true);
+    // STEP 2: Classify structure types and extract time/price data
+    OscillatorStructureTypes structure_types[6];
+    StructureTimePrice structure_data[4];
 
-    indicator_timeframe = structure_stoch_indicator_handle.indicator_timeframe;
-    indicator_period    = structure_stoch_indicator_handle.indicator_period;
+    ClassifyStructureTypes(
+      os_market_structures,
+      initial_is_bottom,
+      initial_is_peak,
+      structure_types,
+      structure_data
+    );
 
-    // --- scan de extremos ---
-    for(int i = 1; i < n_ext; i++)
-    {
-      OscillatorMarketStructure local_os_market_structure;
-      OscillatorMarketStructure initial_os_market_structure;
+    // Populate structure type fields
+    first_structure_type  = structure_types[0];
+    second_structure_type = structure_types[1];
+    third_structure_type  = structure_types[2];
+    fourth_structure_type = structure_types[3];
+    fifth_structure_type  = structure_types[4];
+    six_structure_type    = structure_types[5];
 
-      high_1  = iHigh(_Symbol, indicator_timeframe, i);
-      low_1   = iLow(_Symbol, indicator_timeframe, i);
-      time_1  = iTime(_Symbol, indicator_timeframe, i);
-      stoch_1 = NormalizeDouble(indicator_main_values[i], 2);
+    // Populate structure time/price fields
+    first_structure_time   = structure_data[0].structure_time;
+    first_structure_price  = structure_data[0].structure_price;
+    second_structure_time  = structure_data[1].structure_time;
+    second_structure_price = structure_data[1].structure_price;
+    third_structure_time   = structure_data[2].structure_time;
+    third_structure_price  = structure_data[2].structure_price;
+    fourth_structure_time  = structure_data[3].structure_time;
+    fourth_structure_price = structure_data[3].structure_price;
 
-      // máximo 13 estructuras
-      if(total_signal_structures >= 13) break;
+    // STEP 3: Calculate Fibonacci levels
+    double fibonacci_levels[4];
 
-      // extremos actuales si es el primer ciclo
-      if(total_signal_structures == 0 && indicator_bottom_values[i] != EMPTY_VALUE) current_extremum_bottom = indicator_bottom_values[i];
-      if(total_signal_structures == 0 && indicator_peak_values[i]   != EMPTY_VALUE) current_extremum_peak   = indicator_peak_values[i];
+    CalculateFibonacciLevels(
+      os_market_structures,
+      initial_is_bottom,
+      initial_is_peak,
+      fibonacci_levels
+    );
 
-      // iniciales para bottom
-      if(total_signal_structures == 0 && low_1 < signal_low_price)
-      {
-        signal_low_price            = low_1;
-        signal_time_extremum_bottom = time_1;
-      }
-      if(total_signal_structures == 0 && stoch_1 < signal_stoch_extremum_bottom) signal_stoch_extremum_bottom = stoch_1;
+    // Populate Fibonacci level fields
+    first_fibonacci_level  = fibonacci_levels[0];
+    second_fibonacci_level = fibonacci_levels[1];
+    third_fibonacci_level  = fibonacci_levels[2];
+    fourth_fibonacci_level = fibonacci_levels[3];
 
-      // iniciales para peak
-      if(total_signal_structures == 0 && high_1 > signal_high_price)
-      {
-        signal_high_price          = high_1;
-        signal_time_extremum_peak = time_1;
-      }
-      if(total_signal_structures == 0 && stoch_1 > signal_stoch_extremum_peak) signal_stoch_extremum_peak = stoch_1;
+    // STEP 4: Calculate extremum statistics (NEW)
+    CalculateAllExtremumStatistics(
+      os_market_structures,
+      extremum_stats
+    );
 
-      // buscar primer par (peak/bottom)
-      if(
-        total_signal_structures      == 0           &&
-        indicator_extremum_values[i] != EMPTY_VALUE &&
-        (indicator_peak_values[i] != EMPTY_VALUE || indicator_bottom_values[i] != EMPTY_VALUE)
-      ) {
-        if(indicator_extremum_values[i] == indicator_peak_values[i])
-        {
-          // añadir bottom inicial (previo)
-          initial_struct_bottom = true;
-          initial_os_market_structure.extremum_low   = signal_low_price;
-          initial_os_market_structure.extremum_stoch = signal_stoch_extremum_bottom;
-          initial_os_market_structure.extremum_time  = signal_time_extremum_bottom;
-          total_signal_structures = AddElementToArray(os_market_structures, initial_os_market_structure);
+    return true;
+  }
 
-          // añadir peak actual
-          local_os_market_structure.extremum_high  = indicator_extremum_values[i];
-          local_os_market_structure.extremum_stoch = indicator_stoch_extremum_values[i];
-          local_os_market_structure.extremum_time  = time_1;
-          total_signal_structures = AddElementToArray(os_market_structures, local_os_market_structure);
-          continue;
-        }
+  //+------------------------------------------------------------------+
+  //| NEW: Initialize with custom depth configuration                  |
+  //| Allows configuring number of extrema to analyze                  |
+  //+------------------------------------------------------------------+
+  bool InitWithCustomDepth(
+    IndicatorsHandleInfo &structure_stoch_indicator_handle,
+    int custom_depth = 13
+  ) {
+    extrema_depth_config = custom_depth;
+    
+    bool initial_is_bottom = false;
+    bool initial_is_peak   = false;
 
-        if(indicator_extremum_values[i] == indicator_bottom_values[i])
-        {
-          // añadir peak inicial (previo)
-          initial_struct_peak = true;
-          initial_os_market_structure.extremum_high  = signal_high_price;
-          initial_os_market_structure.extremum_stoch = signal_stoch_extremum_peak;
-          initial_os_market_structure.extremum_time  = signal_time_extremum_peak;
-          total_signal_structures = AddElementToArray(os_market_structures, initial_os_market_structure);
-
-          // añadir bottom actual
-          local_os_market_structure.extremum_low   = indicator_extremum_values[i];
-          local_os_market_structure.extremum_stoch = indicator_stoch_extremum_values[i];
-          local_os_market_structure.extremum_time  = time_1;
-          total_signal_structures = AddElementToArray(os_market_structures, local_os_market_structure);
-          continue;
-        }
-      }
-
-      // siguiente bottom
-      if(
-        total_signal_structures      >= 2           &&
-        indicator_extremum_values[i] != EMPTY_VALUE &&
-        indicator_bottom_values[i]   != EMPTY_VALUE &&
-        indicator_extremum_values[i] == indicator_bottom_values[i]
-      ) {
-        local_os_market_structure.extremum_low   = indicator_extremum_values[i];
-        local_os_market_structure.extremum_stoch = indicator_stoch_extremum_values[i];
-        local_os_market_structure.extremum_time  = time_1;
-        total_signal_structures = AddElementToArray(os_market_structures, local_os_market_structure);
-        continue;
-      }
-
-      // siguiente peak
-      if(
-        total_signal_structures      >= 2           &&
-        indicator_extremum_values[i] != EMPTY_VALUE &&
-        indicator_peak_values[i]     != EMPTY_VALUE &&
-        indicator_extremum_values[i] == indicator_peak_values[i]
-      ) {
-        local_os_market_structure.extremum_high  = indicator_extremum_values[i];
-        local_os_market_structure.extremum_stoch = indicator_stoch_extremum_values[i];
-        local_os_market_structure.extremum_time  = time_1;
-        total_signal_structures = AddElementToArray(os_market_structures, local_os_market_structure);
-        continue;
-      }
+    // STEP 1: Detect extrema with custom depth
+    if(!DetectMarketExtrema(
+      structure_stoch_indicator_handle,
+      os_market_structures,
+      initial_is_bottom,
+      initial_is_peak,
+      indicator_timeframe,
+      indicator_period,
+      custom_depth  // Use custom depth
+    )) {
+      return false;
     }
 
-    if(total_signal_structures < 13) return false;
+    // STEP 2: Classify structure types and extract time/price data
+    OscillatorStructureTypes structure_types[6];
+    StructureTimePrice structure_data[4];
 
-    // índices base para cálculos
-    structure_peaks_index   = initial_struct_bottom ? 1 : 0;
-    structure_bottoms_index = initial_struct_peak   ? 1 : 0;
+    ClassifyStructureTypes(
+      os_market_structures,
+      initial_is_bottom,
+      initial_is_peak,
+      structure_types,
+      structure_data
+    );
 
-    // tipos de estructura + datos individuales
-    if(initial_struct_bottom)
-    {
-      first_structure_type  = GetOscillatorStructureType(OSCILLATOR_LOW_PRICES,  os_market_structures[structure_bottoms_index].extremum_low,      os_market_structures[structure_bottoms_index+2].extremum_low);
-      second_structure_type = GetOscillatorStructureType(OSCILLATOR_HIGH_PRICES, os_market_structures[structure_peaks_index].extremum_high,       os_market_structures[structure_peaks_index+2].extremum_high);
-      third_structure_type  = GetOscillatorStructureType(OSCILLATOR_LOW_PRICES,  os_market_structures[structure_bottoms_index+2].extremum_low,    os_market_structures[structure_bottoms_index+4].extremum_low);
-      fourth_structure_type = GetOscillatorStructureType(OSCILLATOR_HIGH_PRICES, os_market_structures[structure_peaks_index+2].extremum_high,      os_market_structures[structure_peaks_index+4].extremum_high);
-      fifth_structure_type  = GetOscillatorStructureType(OSCILLATOR_LOW_PRICES,  os_market_structures[structure_bottoms_index+4].extremum_low,    os_market_structures[structure_bottoms_index+6].extremum_low);
-      six_structure_type    = GetOscillatorStructureType(OSCILLATOR_HIGH_PRICES, os_market_structures[structure_peaks_index+4].extremum_high,      os_market_structures[structure_peaks_index+6].extremum_high);
+    // Populate structure type fields (backward compatibility)
+    first_structure_type  = structure_types[0];
+    second_structure_type = structure_types[1];
+    third_structure_type  = structure_types[2];
+    fourth_structure_type = structure_types[3];
+    fifth_structure_type  = structure_types[4];
+    six_structure_type    = structure_types[5];
 
-      // EXTREMUM STATS
-      first_structure_time   = os_market_structures[structure_bottoms_index].extremum_time;
-      first_structure_price  = os_market_structures[structure_bottoms_index].extremum_low;
-      second_structure_time  = os_market_structures[structure_bottoms_index+1].extremum_time;
-      second_structure_price = os_market_structures[structure_bottoms_index+1].extremum_high;
-      third_structure_time   = os_market_structures[structure_bottoms_index+2].extremum_time;
-      third_structure_price  = os_market_structures[structure_bottoms_index+2].extremum_low;
-      fourth_structure_time  = os_market_structures[structure_bottoms_index+3].extremum_time;
-      fourth_structure_price = os_market_structures[structure_bottoms_index+3].extremum_high;
+    // Populate structure time/price fields (backward compatibility)
+    first_structure_time   = structure_data[0].structure_time;
+    first_structure_price  = structure_data[0].structure_price;
+    second_structure_time  = structure_data[1].structure_time;
+    second_structure_price = structure_data[1].structure_price;
+    third_structure_time   = structure_data[2].structure_time;
+    third_structure_price  = structure_data[2].structure_price;
+    fourth_structure_time  = structure_data[3].structure_time;
+    fourth_structure_price = structure_data[3].structure_price;
 
-      // FIBONACCI LEVELS
-      first_fibonacci_level  = GetBullishFibonacciPercentage(os_market_structures[structure_bottoms_index].extremum_low,    os_market_structures[structure_bottoms_index+1].extremum_high, os_market_structures[structure_bottoms_index+2].extremum_low);
-      second_fibonacci_level = GetBearishFibonacciPercentage(os_market_structures[structure_bottoms_index+1].extremum_high, os_market_structures[structure_bottoms_index+2].extremum_low,  os_market_structures[structure_bottoms_index+3].extremum_high);
-      third_fibonacci_level  = GetBullishFibonacciPercentage(os_market_structures[structure_bottoms_index+2].extremum_low,  os_market_structures[structure_bottoms_index+3].extremum_high, os_market_structures[structure_bottoms_index+4].extremum_low);
-      fourth_fibonacci_level = GetBearishFibonacciPercentage(os_market_structures[structure_bottoms_index+3].extremum_high, os_market_structures[structure_bottoms_index+4].extremum_low,  os_market_structures[structure_bottoms_index+5].extremum_high);
+    // STEP 3: Calculate Fibonacci levels (backward compatibility)
+    double fibonacci_levels[4];
 
-      return true;
-    }
+    CalculateFibonacciLevels(
+      os_market_structures,
+      initial_is_bottom,
+      initial_is_peak,
+      fibonacci_levels
+    );
 
-    if(initial_struct_peak)
-    {
-      first_structure_type  = GetOscillatorStructureType(OSCILLATOR_HIGH_PRICES, os_market_structures[structure_peaks_index].extremum_high,       os_market_structures[structure_peaks_index+2].extremum_high);
-      second_structure_type = GetOscillatorStructureType(OSCILLATOR_LOW_PRICES,  os_market_structures[structure_bottoms_index].extremum_low,      os_market_structures[structure_bottoms_index+2].extremum_low);
-      third_structure_type  = GetOscillatorStructureType(OSCILLATOR_HIGH_PRICES, os_market_structures[structure_peaks_index+2].extremum_high,      os_market_structures[structure_peaks_index+4].extremum_high);
-      fourth_structure_type = GetOscillatorStructureType(OSCILLATOR_LOW_PRICES,  os_market_structures[structure_bottoms_index+2].extremum_low,    os_market_structures[structure_bottoms_index+4].extremum_low);
-      fifth_structure_type  = GetOscillatorStructureType(OSCILLATOR_HIGH_PRICES, os_market_structures[structure_peaks_index+4].extremum_high,      os_market_structures[structure_peaks_index+6].extremum_high);
-      six_structure_type    = GetOscillatorStructureType(OSCILLATOR_LOW_PRICES,  os_market_structures[structure_bottoms_index+4].extremum_low,    os_market_structures[structure_bottoms_index+6].extremum_low);
+    // Populate Fibonacci level fields
+    first_fibonacci_level  = fibonacci_levels[0];
+    second_fibonacci_level = fibonacci_levels[1];
+    third_fibonacci_level  = fibonacci_levels[2];
+    fourth_fibonacci_level = fibonacci_levels[3];
 
-      // EXTREMUM STATS
-      first_structure_time   = os_market_structures[structure_peaks_index].extremum_time;
-      first_structure_price  = os_market_structures[structure_peaks_index].extremum_high;
-      second_structure_time  = os_market_structures[structure_peaks_index+1].extremum_time;
-      second_structure_price = os_market_structures[structure_peaks_index+1].extremum_low;
-      third_structure_time   = os_market_structures[structure_peaks_index+2].extremum_time;
-      third_structure_price  = os_market_structures[structure_peaks_index+2].extremum_high;
-      fourth_structure_time  = os_market_structures[structure_peaks_index+3].extremum_time;
-      fourth_structure_price = os_market_structures[structure_peaks_index+3].extremum_low;
+    // STEP 4: Calculate extremum statistics
+    CalculateAllExtremumStatistics(
+      os_market_structures,
+      extremum_stats
+    );
 
-      // FIBONACCI LEVELS
-      first_fibonacci_level  = GetBearishFibonacciPercentage(os_market_structures[structure_peaks_index].extremum_high,    os_market_structures[structure_peaks_index+1].extremum_low,  os_market_structures[structure_peaks_index+2].extremum_high);
-      second_fibonacci_level = GetBullishFibonacciPercentage(os_market_structures[structure_peaks_index+1].extremum_low,   os_market_structures[structure_peaks_index+2].extremum_high, os_market_structures[structure_peaks_index+3].extremum_low);
-      third_fibonacci_level  = GetBearishFibonacciPercentage(os_market_structures[structure_peaks_index+2].extremum_high,  os_market_structures[structure_peaks_index+3].extremum_low,  os_market_structures[structure_peaks_index+4].extremum_high);
-      fourth_fibonacci_level = GetBullishFibonacciPercentage(os_market_structures[structure_peaks_index+3].extremum_low,   os_market_structures[structure_peaks_index+4].extremum_high, os_market_structures[structure_peaks_index+5].extremum_low);
-
-      return true;
-    }
-
-    return false;
+    return true;
   }
 };
 
-// ++ OSCILLATOR TYPES SETTER ++
-
-OscillatorStructureTypes GetOscillatorStructureType(OscillatorPricesTypes price_type, double main_price, double past_price)
-{
-  if(
-    price_type == OSCILLATOR_HIGH_PRICES &&
-    main_price > past_price
-  ) return OSCILLATOR_STRUCTURE_HH;
-
-  if(
-    price_type == OSCILLATOR_HIGH_PRICES &&
-    main_price < past_price
-  ) return OSCILLATOR_STRUCTURE_HL;
-
-  if(
-    price_type == OSCILLATOR_LOW_PRICES &&
-    main_price > past_price
-  ) return OSCILLATOR_STRUCTURE_LH;
-
-  if(
-    price_type == OSCILLATOR_LOW_PRICES &&
-    main_price < past_price
-  ) return OSCILLATOR_STRUCTURE_LL;
-
-  return OSCILLATOR_STRUCTURE_EQ;
-}
-
-// ++ FIBONACCI GENERAL DIRECTION CALCULATIONS PERCENTAGES & PRICES ++
-
-// FIRST LOW -> FIRST HIGH -> SECOND LOW
-double GetBullishFibonacciPercentage(double signal_entry_bottom_price, double signal_peak_price, double signal_bottom_price)
-{
-  FibonacciLevelPrices fibonacci_prices;
-  double fibonacci_percentage = GetFiboTrendBottomPercent(signal_peak_price, signal_bottom_price, signal_entry_bottom_price);
-
-  GetBullishFibonacciPrices(fibonacci_percentage, fibonacci_prices);
-
-  return fibonacci_prices.entry_level;
-}
-
-// FIRST HIGH -> FIRST LOW -> SECOND HIGH
-double GetBearishFibonacciPercentage(double signal_entry_peak_price, double signal_bottom_price, double signal_peak_price)
-{
-  FibonacciLevelPrices fibonacci_prices;
-  double fibonacci_percentage = GetFiboTrendPeakPercent(signal_peak_price, signal_bottom_price, signal_entry_peak_price);
-
-  GetBearishFibonacciPrices(fibonacci_percentage, fibonacci_prices);
-
-  return fibonacci_prices.entry_level;
-}
-
-// CALCULATE FIBONACCI PRICES
-
-void GetBullishFibonacciPrices(double entry_level_percentage, FibonacciLevelPrices &fibonacci_prices)
-{
-  double next_level = 0;
-
-  // LEVELS PERCENTAGES
-  fibonacci_prices.entry_level      = GetPreciseEntryLevel(entry_level_percentage, next_level);
-  fibonacci_prices.entry_next_level = next_level;
-}
-
-void GetBearishFibonacciPrices(double entry_level_percentage, FibonacciLevelPrices &fibonacci_prices)
-{
-  double next_level = 0;
-
-  // LEVELS PERCENTAGES
-  fibonacci_prices.entry_level      = GetPreciseEntryLevel(entry_level_percentage, next_level);
-  fibonacci_prices.entry_next_level = next_level;
-}
-
-// FIBONACCI PERCENTAGE LEVELS
-
-double GetPreciseEntryLevel(double entry_level, double &next_level)
-{
-  int    fibonacci_levels_total = ArraySize(AllFibonacciLevels)-1;
-  double entry_level_plus       = 0;
-  double finish_level_plus      = 0;
-
-  for(int i = 0; i < fibonacci_levels_total; i++)
-  {
-    entry_level_plus = NormalizeDouble(entry_level + 1.0, 1); // ADD A +1 TO COVER INCORRECT DECIMAL ENTRY LEVELS
-
-    if(entry_level_plus >= AllFibonacciLevels[i] && entry_level_plus < AllFibonacciLevels[i+1])
-    {
-      next_level = AllFibonacciLevels[i+1];
-      return AllFibonacciLevels[i];
-    }
-  }
-
-  return entry_level;
-}
-
-double GetFiboRetracementBottomPrice(double peak_price, double bottom_price, double percentage)
-{
-  double diff_prices      = peak_price - bottom_price;
-  double percentage_price = peak_price - ((percentage / 100.0) * diff_prices);
-
-  return NormalizeDouble(percentage_price, _Digits);
-}
-
-double GetFiboRetracementPeakPrice(double peak_price, double bottom_price, double percentage)
-{
-  double diff_prices      = peak_price - bottom_price;
-  double percentage_price = bottom_price + ((percentage / 100.0) * diff_prices);
-
-  return NormalizeDouble(percentage_price, _Digits);
-}
-
-double GetFiboTrendBottomPrice(double peak_price, double bottom_price, double percentage)
-{
-  double diff_prices      = peak_price - bottom_price;
-  double percentage_price = peak_price - ((percentage / 100.0) * diff_prices); // 0% IS THE PEAK
-
-  return NormalizeDouble(percentage_price, _Digits);
-}
-
-double GetFiboTrendPeakPrice(double peak_price, double bottom_price, double percentage)
-{
-  double diff_prices      = peak_price - bottom_price;
-  double percentage_price = ((percentage / 100.0) * diff_prices) + bottom_price; // 0% IS THE BOTTOM
-
-  return NormalizeDouble(percentage_price, _Digits);
-}
-
-double GetFiboTrendPeakPercent(double peak_price, double bottom_price, double price)
-{
-  double percentage = ((price - bottom_price) / (peak_price - bottom_price)) * 100.0; // 100% IS THE PEAK
-
-  return NormalizeDouble(percentage, 1);
-}
-
-double GetFiboTrendBottomPercent(double peak_price, double bottom_price, double price)
-{
-  double percentage = ((peak_price - price) / (peak_price - bottom_price)) * 100.0; // 100% IS THE BOTTOM
-
-  return NormalizeDouble(percentage, 1);
-}
-
-// ++ FIBONACCI EXPANSION LOGIC ++
-
-double GetFETrendBottomPrice(double peak_price, double bottom_price, double correction_peak_hh, double percentage)
-{
-  double diff_prices      = peak_price - bottom_price; // A -> B
-  double percentage_price = correction_peak_hh - ((percentage / 100.0) * diff_prices); // SUBSTRACT (C) PEAK HH
-
-  return NormalizeDouble(percentage_price, _Digits);
-}
-
-double GetFETrendPeakPrice(double peak_price, double bottom_price, double correction_bottom_ll, double percentage)
-{
-  double diff_prices      = peak_price - bottom_price; // B -> A
-  double percentage_price = correction_bottom_ll + ((percentage / 100.0) * diff_prices); // PLUS (C) BOTTOM LL
-
-  return NormalizeDouble(percentage_price, _Digits);
-}
-
-double GetFETrendBottomPercentage(double peak_price, double bottom_price, double correction_peak_hh, double price)
-{
-  double diff_prices = peak_price - bottom_price;  // Movimiento A -> B
-  double percentage  = ((correction_peak_hh - price) / diff_prices) * 100.0; // PEAK PRICE (C) IS 0%
-
-  return NormalizeDouble(percentage, 1); // Retorna el porcentaje con 2 decimales
-}
-
-double GetFETrendPeakPercentage(double peak_price, double bottom_price, double correction_bottom_ll, double price)
-{
-  double diff_prices = peak_price - bottom_price;  // Movimiento B -> A
-  double percentage  = ((price - correction_bottom_ll) / diff_prices) * 100.0; // BOTTOM PRICE (C) IS 0%
-
-  return NormalizeDouble(percentage, 1); // Retorna el porcentaje con 2 decimales
-}
-
 #endif // _MICROSERVICES_INDICATORS_STOCHASTIC_MARKET_INDICATOR_MQH_
-

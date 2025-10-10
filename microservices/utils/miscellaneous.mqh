@@ -33,6 +33,11 @@ double AllFibonacciLevels[101] = {
   1923.6, 1938.2, 1961.8, 1978.6, 2000.0
 };
 
+double DefaultFibonacciLevels[9] = {
+  0.0, 23.6, 38.2, 61.8, 78.6, 100.0,
+  161.8, 261.8, 423.6
+};
+
 // Escribe un texto en un archivo (sobrescribe si ya existía).
 void WriteToFile(string filename, string text)
 {

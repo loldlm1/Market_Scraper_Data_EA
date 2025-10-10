@@ -127,7 +127,7 @@ Stochastic indicator data per signal:
 **Data Timing**: All `_0` values represent the entry_time candle, `_1` = 1 bar before entry, `_2` = 2 bars before, `_3` = 3 bars before
 
 ### StochasticMarketStructureDB
-Market structure analysis based on stochastic:
+Market structure analysis based on stochastic (Summary View):
 - `signal_id` (FK): Links to SignalParamsDB
 - `timeframe`: Chart period (e.g., PERIOD_M1, PERIOD_H1)
 - `period`: Indicator period (5, 8, 13, etc.)
@@ -137,6 +137,46 @@ Market structure analysis based on stochastic:
 - `first_fibonacci_level` through `fourth_fibonacci_level`: Fibonacci retracement levels (0-100 percentage)
 
 **PRIMARY KEY**: `(signal_id, timeframe, period)` - ensures one record per signal/timeframe/period combination
+
+**Note**: This table provides a quick summary view with the first 6 structure types and 4 fibonacci levels for backward compatibility.
+
+### ExtremumStatisticsDB (NEW - v1.10)
+Detailed per-extremum analysis with advanced fibonacci statistics:
+- `signal_id` (FK): Links to SignalParamsDB
+- `timeframe`: Chart period (e.g., PERIOD_M1, PERIOD_H1)
+- `period`: Indicator period (5, 8, 13, etc.)
+- `extremum_index`: Position in extrema array (0 = most recent)
+- `extremum_time`: Timestamp of this extremum (epoch seconds)
+- `extremum_price`: Price level of this extremum
+- `is_peak`: 1 if peak, 0 if bottom
+
+**EXTREMUM_INTERN Statistics** (Internal Fibonacci Analysis):
+- `intern_fibo_level`: Fibonacci % from previous opposite extremum (can be >100%)
+- `intern_reference_price`: Reference price used for INTERN calculation
+- `intern_is_extension`: 1 if >100% (extended beyond previous swing), 0 otherwise
+
+**EXTREMUM_EXTERN Statistics** (External Fibonacci Analysis):
+- `extern_fibo_level`: Fibonacci % from oldest extremum range (typically 0-78.6%)
+- `extern_oldest_high`: Highest peak in analyzed history
+- `extern_oldest_low`: Lowest bottom in analyzed history
+- `extern_structures_broken`: Count of highs/lows exceeded to reach this level
+- `extern_is_active`: 1 when INTERN >100% (breakout scenario), 0 otherwise
+
+**Structure Classification**:
+- `structure_type`: Dynamic structure pattern (0=EQ, 1=HH, 2=HL, 3=LH, 4=LL)
+
+**PRIMARY KEY**: `(signal_id, timeframe, period, extremum_index)` - one record per extremum
+
+**Data Depth**: Stores up to 13 extrema by default (configurable in code)
+
+**Use Cases**:
+- **Trend Strength**: INTERN >150% indicates strong momentum
+- **Extension Detection**: INTERN >100% = price extended beyond previous structure
+- **Long-term Context**: EXTERN shows position within historical range
+- **Breakout Validation**: `extern_structures_broken` counts levels exceeded
+- **Support/Resistance**: EXTERN near 0%/100% = key historical levels
+
+**Example Queries** (see Database Queries section below)
 
 ### BodyMADB
 Candle body oscillator and moving average data per signal:
@@ -432,6 +472,89 @@ WHERE bp.timeframe = 1 AND bp.period = 21
   AND sm.timeframe = 1 AND sm.period = 5
   AND bm.timeframe = 1 AND bm.period = 5
 ORDER BY sp.entry_time DESC;
+```
+
+### Query Extremum Statistics (NEW - v1.10)
+```sql
+-- Get all extrema for a specific signal
+SELECT
+  extremum_index,
+  datetime(extremum_time, 'unixepoch') as extremum_datetime,
+  extremum_price,
+  CASE WHEN is_peak = 1 THEN 'Peak' ELSE 'Bottom' END as type,
+  intern_fibo_level,
+  intern_is_extension,
+  extern_fibo_level,
+  extern_structures_broken,
+  CASE structure_type
+    WHEN 0 THEN 'EQ'
+    WHEN 1 THEN 'HH'
+    WHEN 2 THEN 'HL'
+    WHEN 3 THEN 'LH'
+    WHEN 4 THEN 'LL'
+  END as structure
+FROM ExtremumStatisticsDB
+WHERE signal_id = 1 AND timeframe = 1 AND period = 5
+ORDER BY extremum_index;
+```
+
+### Find Strong Extensions (INTERN >150%)
+```sql
+SELECT
+  sp.entry_time,
+  sp.signal_type,
+  es.extremum_index,
+  es.extremum_price,
+  es.intern_fibo_level,
+  es.extern_structures_broken,
+  sp.raw_profit
+FROM SignalParamsDB sp
+JOIN ExtremumStatisticsDB es ON sp.signal_id = es.signal_id
+WHERE es.timeframe = 1 
+  AND es.period = 5
+  AND es.intern_fibo_level > 150.0
+  AND es.intern_is_extension = 1
+ORDER BY es.intern_fibo_level DESC;
+```
+
+### Analyze Breakout Strength
+```sql
+SELECT
+  sp.entry_time,
+  sp.signal_type,
+  es.extremum_price,
+  es.extern_structures_broken,
+  es.extern_fibo_level,
+  sp.raw_profit
+FROM SignalParamsDB sp
+JOIN ExtremumStatisticsDB es ON sp.signal_id = es.signal_id
+WHERE es.timeframe = 1 
+  AND es.period = 5
+  AND es.extern_is_active = 1
+  AND es.extern_structures_broken >= 3
+ORDER BY es.extern_structures_broken DESC;
+```
+
+### Compare Summary vs Detailed View
+```sql
+-- Get summary from old table
+SELECT 
+  signal_id,
+  first_structure_type,
+  second_structure_type,
+  first_fibonacci_level
+FROM StochasticMarketStructureDB
+WHERE signal_id = 1 AND timeframe = 1 AND period = 5;
+
+-- Get detailed extrema from new table
+SELECT 
+  extremum_index,
+  structure_type,
+  intern_fibo_level,
+  extern_fibo_level
+FROM ExtremumStatisticsDB
+WHERE signal_id = 1 AND timeframe = 1 AND period = 5
+ORDER BY extremum_index;
 ```
 
 ## Troubleshooting
