@@ -83,68 +83,131 @@ void CalculateExtremumExtern(
   ExtremumStatistics &stats
 ) {
   if(prev_same_type_index < 0 || prev_opposite_index < 0) return;
-  
-  bool is_peak = extrema_array[current_index].is_peak;
+
+  bool   is_peak       = extrema_array[current_index].is_peak;
   double current_price = is_peak ? extrema_array[current_index].extremum_high : extrema_array[current_index].extremum_low;
-  
-  // EXTERN uses the SAME reference structure that INTERN identified:
-  // - prev_same_type_index = the old peak/bottom being tested (100% mark)
-  // - Find the swing opposite between current and that reference (0% mark)
-  
-  int    reference_index = prev_same_type_index;
-  double reference_extreme = 0.0;  // 100% level
-  double reference_opposite = 0.0; // 0% level
-  
-  if(is_peak)
+  int    array_size    = ArraySize(extrema_array);
+
+  if(array_size <= 0) return;
+
+  // Step 1: walk back to locate the actual same-type structure the breakout is interacting with.
+  int    reference_index        = -1;
+  int    last_broken_same_index = prev_same_type_index;
+
+  for(int i = prev_same_type_index; i < array_size; i++)
   {
-    // For peak: prev_same_type_index is the old peak being tested
-    reference_extreme = extrema_array[prev_same_type_index].extremum_high;
-    
-    // Find the lowest bottom between current and that old peak
-    double lowest_bottom = DBL_MAX;
-    for(int i = current_index; i <= prev_same_type_index; i++)
+    if(extrema_array[i].is_peak != is_peak) continue;
+
+    double candidate_price = is_peak ? extrema_array[i].extremum_high : extrema_array[i].extremum_low;
+
+    if(is_peak)
     {
-      if(!extrema_array[i].is_peak && extrema_array[i].extremum_low < lowest_bottom)
+      if(current_price > candidate_price)
       {
-        lowest_bottom = extrema_array[i].extremum_low;
+        last_broken_same_index = i;
+        continue;
       }
     }
-    reference_opposite = lowest_bottom;
-    
-    stats.extern_oldest_high = reference_extreme;
-    stats.extern_oldest_low  = reference_opposite;
+    else
+    {
+      if(current_price < candidate_price)
+      {
+        last_broken_same_index = i;
+        continue;
+      }
+    }
+
+    reference_index = i;
+    break;
+  }
+
+  if(reference_index < 0)
+  {
+    reference_index = last_broken_same_index;
+  }
+
+  // Step 2: locate the matching opposite extremum forming the historical swing.
+  int partner_index = -1;
+
+  if(is_peak)
+  {
+    double lowest_bottom = DBL_MAX;
+    for(int i = reference_index + 1; i < array_size; i++)
+    {
+      if(extrema_array[i].is_peak) continue;
+
+      if(extrema_array[i].extremum_low < lowest_bottom)
+      {
+        lowest_bottom = extrema_array[i].extremum_low;
+        partner_index = i;
+      }
+    }
+
+    if(partner_index >= 0)
+    {
+      stats.extern_oldest_high = extrema_array[reference_index].extremum_high;
+      stats.extern_oldest_low  = extrema_array[partner_index].extremum_low;
+    }
+    else
+    {
+      double global_low = DBL_MAX;
+      for(int i = 0; i < array_size; i++)
+      {
+        if(extrema_array[i].extremum_low < global_low)
+          global_low = extrema_array[i].extremum_low;
+      }
+
+      stats.extern_oldest_high = extrema_array[reference_index].extremum_high;
+      stats.extern_oldest_low  = global_low;
+    }
   }
   else
   {
-    // For bottom: prev_same_type_index is the old bottom being tested
-    reference_extreme = extrema_array[prev_same_type_index].extremum_low;
-    
-    // Find the highest peak between current and that old bottom
     double highest_peak = -DBL_MAX;
-    for(int i = current_index; i <= prev_same_type_index; i++)
+    for(int i = reference_index + 1; i < array_size; i++)
     {
-      if(extrema_array[i].is_peak && extrema_array[i].extremum_high > highest_peak)
+      if(!extrema_array[i].is_peak) continue;
+
+      if(extrema_array[i].extremum_high > highest_peak)
       {
         highest_peak = extrema_array[i].extremum_high;
+        partner_index = i;
       }
     }
-    reference_opposite = highest_peak;
-    
-    stats.extern_oldest_high = reference_opposite;
-    stats.extern_oldest_low  = reference_extreme;
+
+    if(partner_index >= 0)
+    {
+      stats.extern_oldest_low  = extrema_array[reference_index].extremum_low;
+      stats.extern_oldest_high = extrema_array[partner_index].extremum_high;
+    }
+    else
+    {
+      double global_high = -DBL_MAX;
+      for(int i = 0; i < array_size; i++)
+      {
+        if(extrema_array[i].extremum_high > global_high)
+          global_high = extrema_array[i].extremum_high;
+      }
+
+      stats.extern_oldest_low  = extrema_array[reference_index].extremum_low;
+      stats.extern_oldest_high = global_high;
+    }
   }
-  
-  // Calculate fibonacci level if we have valid range
+
+  // Step 3: calculate fibonacci level using the selected historical swing.
   if(stats.extern_oldest_high > stats.extern_oldest_low)
   {
     stats.extern_fibo_level = GetFiboTrendPeakPercent(stats.extern_oldest_high, stats.extern_oldest_low, current_price);
-    
-    // Snap to nearest DefaultFibonacciLevel
-    double next_level = 0;
+
+    double next_level = 0.0;
     stats.extern_fibo_level = GetPreciseEntryLevelDefault(stats.extern_fibo_level, next_level);
   }
-  
-  // Count structures broken between current and reference
+  else
+  {
+    stats.extern_fibo_level = 0.0;
+  }
+
+  // Count every intervening same-type structure broken en route to the reference level.
   stats.extern_structures_broken = CountStructuresBroken(
     extrema_array,
     current_index,
