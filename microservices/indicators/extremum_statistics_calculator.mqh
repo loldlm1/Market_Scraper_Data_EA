@@ -132,15 +132,24 @@ void CalculateExtremumExtern(
   if(is_peak)
   {
     double lowest_bottom = DBL_MAX;
-    for(int i = reference_index + 1; i < array_size; i++)
+
+    for(int i = reference_index - 1; i > current_index; --i)
     {
       if(extrema_array[i].is_peak) continue;
 
-      if(extrema_array[i].extremum_low < lowest_bottom)
+      double candidate_low = extrema_array[i].extremum_low;
+
+      if(candidate_low < lowest_bottom)
       {
-        lowest_bottom = extrema_array[i].extremum_low;
+        lowest_bottom = candidate_low;
         partner_index = i;
       }
+    }
+
+    if(partner_index < 0 && prev_opposite_index > current_index && prev_opposite_index < reference_index)
+    {
+      partner_index = prev_opposite_index;
+      lowest_bottom = extrema_array[partner_index].extremum_low;
     }
 
     if(partner_index >= 0)
@@ -164,15 +173,24 @@ void CalculateExtremumExtern(
   else
   {
     double highest_peak = -DBL_MAX;
-    for(int i = reference_index + 1; i < array_size; i++)
+
+    for(int i = reference_index - 1; i > current_index; --i)
     {
       if(!extrema_array[i].is_peak) continue;
 
-      if(extrema_array[i].extremum_high > highest_peak)
+      double candidate_high = extrema_array[i].extremum_high;
+
+      if(candidate_high > highest_peak)
       {
-        highest_peak = extrema_array[i].extremum_high;
+        highest_peak = candidate_high;
         partner_index = i;
       }
+    }
+
+    if(partner_index < 0 && prev_opposite_index > current_index && prev_opposite_index < reference_index)
+    {
+      partner_index = prev_opposite_index;
+      highest_peak = extrema_array[partner_index].extremum_high;
     }
 
     if(partner_index >= 0)
