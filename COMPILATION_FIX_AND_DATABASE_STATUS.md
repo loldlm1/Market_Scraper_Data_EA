@@ -62,6 +62,7 @@ After review, we've determined that **BOTH tables should be kept** as they serve
 - EXTREMUM_EXTERN stats (external fibonacci, breakouts)
 - Structure break counting
 - Individual structure types per extremum
+- EXTERN ranges are persisted only when INTERN >=100%, so stored highs/lows correspond to completed retests or breakouts
 
 **Use Case**: Deep analysis, extension detection, breakout validation, ML features requiring granular data
 

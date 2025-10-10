@@ -322,10 +322,10 @@ void CalculateAllExtremumStatistics(
       
       // Check if extension (>100%)
       stats_array[i].intern_is_extension = (stats_array[i].intern_fibo_level > 100.0);
-      
-      // EXTERN is active when INTERN >= 61.8% (reaching toward old structure levels)
+
+      // EXTERN is active only when INTERN >= 100% (full retest or breakout scenario)
       // This includes retests (100%) and extensions (>100%)
-      stats_array[i].extern_is_active = (stats_array[i].intern_fibo_level >= 61.8);
+      stats_array[i].extern_is_active = (stats_array[i].intern_fibo_level >= 100.0);
       
       // Calculate EXTERN using the same reference structure as INTERN
       if(stats_array[i].extern_is_active)

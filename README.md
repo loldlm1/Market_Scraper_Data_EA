@@ -140,6 +140,13 @@ Market structure analysis based on stochastic (Summary View):
 
 **Note**: This table provides a quick summary view with the first 6 structure types and 4 fibonacci levels for backward compatibility.
 
+### Dual Extremum Storage Architecture
+To preserve backward compatibility while unlocking detailed analytics, the EA stores stochastic structures in two coordinated tables:
+- **StochasticMarketStructureDB** – fast summary snapshot (first six structures, legacy Fibonacci trend levels) for lightweight consumers.
+- **ExtremumStatisticsDB** – granular per-extremum feed that now captures EXTERN ranges only when INTERN >=100%, ensuring the detailed table focuses on confirmed retests and breakouts.
+
+Both tables are persisted together during `SaveFullSignalTransaction()`, allowing dashboards to correlate summary signals with their full historical context.
+
 ### ExtremumStatisticsDB (NEW - v1.10)
 Detailed per-extremum analysis with advanced fibonacci statistics:
 - `signal_id` (FK): Links to SignalParamsDB
@@ -160,7 +167,7 @@ Detailed per-extremum analysis with advanced fibonacci statistics:
 - `extern_oldest_high`: Highest peak in analyzed history
 - `extern_oldest_low`: Lowest bottom in analyzed history
 - `extern_structures_broken`: Count of highs/lows exceeded to reach this level
-- `extern_is_active`: 1 when INTERN >100% (breakout scenario), 0 otherwise
+- `extern_is_active`: 1 when INTERN >=100% (retest or breakout), 0 otherwise
 
 **Structure Classification**:
 - `structure_type`: Dynamic structure pattern (0=EQ, 1=HH, 2=HL, 3=LH, 4=LL)
@@ -175,6 +182,7 @@ Detailed per-extremum analysis with advanced fibonacci statistics:
 - **Long-term Context**: EXTERN shows position within historical range
 - **Breakout Validation**: `extern_structures_broken` counts levels exceeded
 - **Support/Resistance**: EXTERN near 0%/100% = key historical levels
+- **EXTERN Activation**: Only triggers when INTERN >=100%, so recorded ranges always reflect completed retests or breakouts
 
 **Example Queries** (see Database Queries section below)
 

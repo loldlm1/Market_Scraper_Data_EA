@@ -35,7 +35,7 @@ struct ExtremumStatistics
   double   extern_oldest_high;       // Oldest peak reference
   double   extern_oldest_low;        // Oldest bottom reference
   int      extern_structures_broken; // Count of highs/lows exceeded
-  bool     extern_is_active;         // True when intern > 100%
+  bool     extern_is_active;         // True when intern >= 100%
   
   // Structure classification
   OscillatorStructureTypes structure_type; // HH, HL, LL, LH, EQ

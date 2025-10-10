@@ -67,6 +67,7 @@ Each service now has a single aggregator file that includes all necessary micros
 - `trading_management.mqh` → includes management files
 - `trading_database.mqh` → includes database files
 - `frontend.mqh` → includes frontend files
+- `trading_database.mqh` orchestrates writes to both StochasticMarketStructureDB (summary) and the newer ExtremumStatisticsDB (detailed, EXTERN-active only when INTERN >=100%).
 
 ### 3. Include Guards
 All files now have proper include guards using full path convention:

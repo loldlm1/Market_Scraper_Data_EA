@@ -40,7 +40,7 @@ struct ExtremumStatistics
     double   extern_oldest_high;
     double   extern_oldest_low;
     int      extern_structures_broken;
-    bool     extern_is_active;         // Active when intern > 100%
+    bool     extern_is_active;         // Active when intern >= 100%
     
     // Classification
     OscillatorStructureTypes structure_type;
@@ -129,6 +129,11 @@ CREATE TABLE IF NOT EXISTS ExtremumStatisticsDB (
 - Handles multiple extrema per signal
 - Proper error handling and logging
 
+#### C. Dual-Table Architecture
+- **StochasticMarketStructureDB** retains legacy summary records for the first six structures.
+- **ExtremumStatisticsDB** delivers the granular feed, enabling EXTERN ranges only when INTERN >=100% so analytics focus on confirmed retests and breakouts.
+- Both tables are written atomically in the trading database service, keeping historical context aligned between summary and detailed datasets.
+
 ## Key Features
 
 ### 1. EXTREMUM_INTERN Analysis
@@ -162,7 +167,7 @@ INTERN = 150% (extended 50% beyond previous peak range)
 **How it works:**
 - Finds highest high and lowest low in entire extrema array
 - Calculates current position within that range
-- Activated when INTERN > 100% (breakout scenario)
+- Activated when INTERN >= 100% (completed retest or breakout scenario)
 
 **Trading Applications:**
 - **0-23.6%** = Near oldest low (potential support)
