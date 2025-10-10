@@ -5,6 +5,7 @@ October 9, 2025
 
 ## Overview
 Added comprehensive logging for the new `ExtremumStatisticsDB` table to the `LogSignalParamsForTF` function, enabling verification that extremum statistics are being calculated and stored correctly.
+The log now reflects the dual-table architecture: summary data continues to flow through `StochasticMarketStructureDB`, while `ExtremumStatisticsDB` only emits EXTERN ranges when INTERN >=100% (full retests or breakouts).
 
 ## Changes Made
 
@@ -92,7 +93,7 @@ SIGNAL PARAMS  [TF=M1]  [DATASET_ID=...]
 - **Percentage**: Position within oldest range
 - **Oldest High/Low**: Historical range boundaries
 - **Structures Broken**: Count of levels exceeded
-- **Active Flag**: Shows `[ACTIVE]` when INTERN > 100%
+- **Active Flag**: Shows `[ACTIVE]` when INTERN >= 100%
 
 ### Structure Type
 - Classification: HH, HL, LL, LH, or EQ
@@ -114,7 +115,7 @@ Run the EA and check the Experts log to see:
 ### 2. Debugging
 If values seem incorrect:
 - Check INTERN percentages match expectations
-- Verify EXTERN activates at right times
+- Verify EXTERN activates once INTERN reaches at least 100%
 - Confirm structure break counts are logical
 - Compare timestamps with chart
 

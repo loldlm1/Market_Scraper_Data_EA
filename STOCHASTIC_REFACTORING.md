@@ -55,6 +55,11 @@ stochastic_market_indicator.mqh (Orchestrator - 195 lines)
 - Independent testing possible
 - Safe to extend without side effects
 
+### Database Output Architecture
+- The refactored indicator now feeds both **StochasticMarketStructureDB** (summary snapshot) and **ExtremumStatisticsDB** (granular per-extremum data).
+- EXTERN analytics are persisted only when `intern_fibo_level >= 100%`, preventing partial retracements from polluting the detailed table.
+- This dual-table design keeps legacy consumers stable while providing richer datasets for advanced analytics.
+
 ## New File Structure
 
 ### 1. extrema_detector.mqh

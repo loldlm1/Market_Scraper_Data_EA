@@ -133,6 +133,10 @@ All files properly protected with include guards:
 - ✓ `_SERVICES_TRADING_DATABASE_MQH_`
 - ✓ `_SERVICES_FRONTEND_MQH_`
 
+### Database Service Architecture Notes
+- `database_signal_wrapper.mqh` now persists both **StochasticMarketStructureDB** (summary) and **ExtremumStatisticsDB** (granular) rows within the same transaction.
+- EXTERN statistics inside `ExtremumStatisticsDB` are saved only when `intern_fibo_level >= 100%`, aligning storage with confirmed retests or breakouts.
+
 ### Service Files
 - ✓ `_SERVICES_TRADING_SIGNALS_SIGNAL_PARAMS_STRUCT_MQH_`
 - ✓ `_SERVICES_TRADING_SIGNALS_MARKET_SIGNAL_CRAWLER_MQH_`

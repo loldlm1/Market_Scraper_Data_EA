@@ -118,6 +118,11 @@ stats.extern_fibo_level = GetPreciseEntryLevelDefault(stats.extern_fibo_level, n
 - StochasticMarketStructureDB continues using 101-level precision
 - ExtremumStatisticsDB uses cleaner 9-level set
 
+### Fix 4: EXTERN Activation Guard
+- EXTERN calculations are now triggered only when the snapped INTERN level is >=100%.
+- Guarantees that external ranges align with completed retests or true breakouts before persisting into ExtremumStatisticsDB.
+- Keeps the new database table focused on actionable structures while legacy summary data remains unchanged.
+
 ## Expected Results After Fix
 
 ### Example 1: Normal Retracement
