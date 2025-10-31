@@ -9,4 +9,3 @@
 #include "trading_management/indicator_definitions_loader.mqh"
 
 #endif // _SERVICES_TRADING_MANAGEMENT_MQH_
-

@@ -8,4 +8,3 @@
 #include "frontend/ea_license_light_version.mqh"
 
 #endif // _SERVICES_FRONTEND_MQH_
-

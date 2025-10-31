@@ -60,4 +60,3 @@ double CommonVolume(string symbol)
 }
 
 #endif // _MICROSERVICES_UTILS_MONEY_FUNCTIONS_MQH_
-

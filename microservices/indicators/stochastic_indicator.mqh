@@ -174,18 +174,18 @@ struct StochasticStructure
 
     // ROUNDS TO 2 DECIMALS FOR PERCENTAGE VALUES
     double value = NormalizeDouble(stochastic_value[index], 2);
-    
+
     // TIMESTAMP VERIFICATION LOGGING (M1 ONLY)
     if(Enable_Verification_Logs && stochastic_indicator_handle.indicator_timeframe == PERIOD_M1)
     {
       datetime candle_time = iTime(_Symbol, stochastic_indicator_handle.indicator_timeframe, index);
-      PrintFormat("[VERIFY-Stochastic] TF=%s, Shift=%d, Time=%s, Value=%.2f", 
-                  TimeframeToString(stochastic_indicator_handle.indicator_timeframe), 
-                  index, 
-                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES), 
+      PrintFormat("[VERIFY-Stochastic] TF=%s, Shift=%d, Time=%s, Value=%.2f",
+                  TimeframeToString(stochastic_indicator_handle.indicator_timeframe),
+                  index,
+                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES),
                   value);
     }
-    
+
     return value;
   }
 
@@ -202,18 +202,18 @@ struct StochasticStructure
 
     // ROUNDS TO 2 DECIMALS FOR PERCENTAGE VALUES
     double value = NormalizeDouble(stochastic_signal_value[index], 2);
-    
+
     // TIMESTAMP VERIFICATION LOGGING (M1 ONLY)
     if(Enable_Verification_Logs && stochastic_indicator_handle.indicator_timeframe == PERIOD_M1)
     {
       datetime candle_time = iTime(_Symbol, stochastic_indicator_handle.indicator_timeframe, index);
-      PrintFormat("[VERIFY-StochSignal] TF=%s, Shift=%d, Time=%s, Value=%.2f", 
-                  TimeframeToString(stochastic_indicator_handle.indicator_timeframe), 
-                  index, 
-                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES), 
+      PrintFormat("[VERIFY-StochSignal] TF=%s, Shift=%d, Time=%s, Value=%.2f",
+                  TimeframeToString(stochastic_indicator_handle.indicator_timeframe),
+                  index,
+                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES),
                   value);
     }
-    
+
     return value;
   }
 
@@ -288,4 +288,3 @@ struct StochasticStructure
 };
 
 #endif // _MICROSERVICES_INDICATORS_STOCHASTIC_INDICATOR_MQH_
-

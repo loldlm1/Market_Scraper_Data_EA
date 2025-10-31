@@ -160,7 +160,7 @@ int OnCalculate(const int rates_total,
       BLGBuffer[i]=NormalizeDouble((GetAppliedPrice(i, open, close, high, low)-ExtBLBuffer[i])/(ExtTLBuffer[i]-ExtBLBuffer[i]) * 100, 2);
       BBPMABuffer[i]=SimpleMA(i,InpPercentMAPeriod,BLGBuffer);
 
-			//--- BB Percent Prices
+      //--- BB Percent Prices
       ExtBBCloseBuffer[i] = NormalizeDouble((close[i]-ExtBLBuffer[i])/(ExtTLBuffer[i]-ExtBLBuffer[i]) * 100, 2);
       ExtBBOpenBuffer[i]  = NormalizeDouble((open[i]-ExtBLBuffer[i])/(ExtTLBuffer[i]-ExtBLBuffer[i]) * 100, 2);
       ExtBBHighBuffer[i]  = NormalizeDouble((high[i]-ExtBLBuffer[i])/(ExtTLBuffer[i]-ExtBLBuffer[i]) * 100, 2);

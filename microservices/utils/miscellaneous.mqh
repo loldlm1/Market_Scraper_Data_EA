@@ -169,4 +169,3 @@ string SqlEnumValue(const int v, const int enum_min, const int enum_max, const i
 }
 
 #endif // _MICROSERVICES_UTILS_MISCELLANEOUS_MQH_
-

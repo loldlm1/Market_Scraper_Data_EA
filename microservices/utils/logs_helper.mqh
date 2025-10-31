@@ -126,7 +126,7 @@ bool ValidateBandsPercentDataOrder(const BandsPercentStructure &bands_data, date
 {
   // Only validate M1 timeframe when verification logs are enabled
   if(!Enable_Verification_Logs || bands_data.indicator_timeframe != PERIOD_M1) return true;
-  
+
   // If entry_time provided, validate that data corresponds to entry_time candle
   // Otherwise just validate the order
   if(entry_time > 0)
@@ -141,16 +141,16 @@ bool ValidateBandsPercentDataOrder(const BandsPercentStructure &bands_data, date
         break;
       }
     }
-    
+
     // Get expected timestamps
     datetime expected_time_0 = iTime(_Symbol, bands_data.indicator_timeframe, entry_shift);
     datetime expected_time_1 = iTime(_Symbol, bands_data.indicator_timeframe, entry_shift + 1);
     datetime expected_time_2 = iTime(_Symbol, bands_data.indicator_timeframe, entry_shift + 2);
     datetime expected_time_3 = iTime(_Symbol, bands_data.indicator_timeframe, entry_shift + 3);
-    
+
     // Verify the first timestamp matches entry_time
     bool valid = (expected_time_0 == entry_time);
-    
+
     if(valid)
     {
       PrintFormat("[OK] BandsPct data matches entry_time for TF=%s: entry=%s, data_times=[%s, %s, %s, %s]",
@@ -169,7 +169,7 @@ bool ValidateBandsPercentDataOrder(const BandsPercentStructure &bands_data, date
                   entry_shift,
                   TimeToString(expected_time_0, TIME_DATE|TIME_MINUTES));
     }
-    
+
     return valid;
   }
   else
@@ -179,9 +179,9 @@ bool ValidateBandsPercentDataOrder(const BandsPercentStructure &bands_data, date
     datetime time_1 = iTime(_Symbol, bands_data.indicator_timeframe, 1);
     datetime time_2 = iTime(_Symbol, bands_data.indicator_timeframe, 2);
     datetime time_3 = iTime(_Symbol, bands_data.indicator_timeframe, 3);
-    
+
     bool order_valid = (time_0 > time_1) && (time_1 > time_2) && (time_2 > time_3);
-    
+
     if(order_valid)
     {
       PrintFormat("[OK] BandsPct timestamp order VALID for TF=%s: %s > %s > %s > %s",
@@ -191,7 +191,7 @@ bool ValidateBandsPercentDataOrder(const BandsPercentStructure &bands_data, date
                   TimeToString(time_2, TIME_DATE|TIME_MINUTES),
                   TimeToString(time_3, TIME_DATE|TIME_MINUTES));
     }
-    
+
     return order_valid;
   }
 }
@@ -200,7 +200,7 @@ bool ValidateStochasticDataOrder(const StochasticStructure &stoch_data, datetime
 {
   // Only validate M1 timeframe when verification logs are enabled
   if(!Enable_Verification_Logs || stoch_data.indicator_timeframe != PERIOD_M1) return true;
-  
+
   // If entry_time provided, validate that data corresponds to entry_time candle
   // Otherwise just validate the order
   if(entry_time > 0)
@@ -215,16 +215,16 @@ bool ValidateStochasticDataOrder(const StochasticStructure &stoch_data, datetime
         break;
       }
     }
-    
+
     // Get expected timestamps
     datetime expected_time_0 = iTime(_Symbol, stoch_data.indicator_timeframe, entry_shift);
     datetime expected_time_1 = iTime(_Symbol, stoch_data.indicator_timeframe, entry_shift + 1);
     datetime expected_time_2 = iTime(_Symbol, stoch_data.indicator_timeframe, entry_shift + 2);
     datetime expected_time_3 = iTime(_Symbol, stoch_data.indicator_timeframe, entry_shift + 3);
-    
+
     // Verify the first timestamp matches entry_time
     bool valid = (expected_time_0 == entry_time);
-    
+
     if(valid)
     {
       PrintFormat("[OK] Stochastic data matches entry_time for TF=%s: entry=%s, data_times=[%s, %s, %s, %s]",
@@ -243,7 +243,7 @@ bool ValidateStochasticDataOrder(const StochasticStructure &stoch_data, datetime
                   entry_shift,
                   TimeToString(expected_time_0, TIME_DATE|TIME_MINUTES));
     }
-    
+
     return valid;
   }
   else
@@ -253,9 +253,9 @@ bool ValidateStochasticDataOrder(const StochasticStructure &stoch_data, datetime
     datetime time_1 = iTime(_Symbol, stoch_data.indicator_timeframe, 1);
     datetime time_2 = iTime(_Symbol, stoch_data.indicator_timeframe, 2);
     datetime time_3 = iTime(_Symbol, stoch_data.indicator_timeframe, 3);
-    
+
     bool order_valid = (time_0 > time_1) && (time_1 > time_2) && (time_2 > time_3);
-    
+
     if(order_valid)
     {
       PrintFormat("[OK] Stochastic timestamp order VALID for TF=%s: %s > %s > %s > %s",
@@ -265,7 +265,7 @@ bool ValidateStochasticDataOrder(const StochasticStructure &stoch_data, datetime
                   TimeToString(time_2, TIME_DATE|TIME_MINUTES),
                   TimeToString(time_3, TIME_DATE|TIME_MINUTES));
     }
-    
+
     return order_valid;
   }
 }
@@ -274,7 +274,7 @@ bool ValidateBodyMADataOrder(const BodyMAStructure &body_ma_data, datetime entry
 {
   // Only validate M1 timeframe when verification logs are enabled
   if(!Enable_Verification_Logs || body_ma_data.indicator_timeframe != PERIOD_M1) return true;
-  
+
   // If entry_time provided, validate that data corresponds to entry_time candle
   // Otherwise just validate the order
   if(entry_time > 0)
@@ -289,16 +289,16 @@ bool ValidateBodyMADataOrder(const BodyMAStructure &body_ma_data, datetime entry
         break;
       }
     }
-    
+
     // Get expected timestamps
     datetime expected_time_0 = iTime(_Symbol, body_ma_data.indicator_timeframe, entry_shift);
     datetime expected_time_1 = iTime(_Symbol, body_ma_data.indicator_timeframe, entry_shift + 1);
     datetime expected_time_2 = iTime(_Symbol, body_ma_data.indicator_timeframe, entry_shift + 2);
     datetime expected_time_3 = iTime(_Symbol, body_ma_data.indicator_timeframe, entry_shift + 3);
-    
+
     // Verify the first timestamp matches entry_time
     bool valid = (expected_time_0 == entry_time);
-    
+
     if(valid)
     {
       PrintFormat("[OK] BodyMA data matches entry_time for TF=%s: entry=%s, data_times=[%s, %s, %s, %s]",
@@ -317,7 +317,7 @@ bool ValidateBodyMADataOrder(const BodyMAStructure &body_ma_data, datetime entry
                   entry_shift,
                   TimeToString(expected_time_0, TIME_DATE|TIME_MINUTES));
     }
-    
+
     return valid;
   }
   else
@@ -327,9 +327,9 @@ bool ValidateBodyMADataOrder(const BodyMAStructure &body_ma_data, datetime entry
     datetime time_1 = iTime(_Symbol, body_ma_data.indicator_timeframe, 1);
     datetime time_2 = iTime(_Symbol, body_ma_data.indicator_timeframe, 2);
     datetime time_3 = iTime(_Symbol, body_ma_data.indicator_timeframe, 3);
-    
+
     bool order_valid = (time_0 > time_1) && (time_1 > time_2) && (time_2 > time_3);
-    
+
     if(order_valid)
     {
       PrintFormat("[OK] BodyMA timestamp order VALID for TF=%s: %s > %s > %s > %s",
@@ -339,7 +339,7 @@ bool ValidateBodyMADataOrder(const BodyMAStructure &body_ma_data, datetime entry
                   TimeToString(time_2, TIME_DATE|TIME_MINUTES),
                   TimeToString(time_3, TIME_DATE|TIME_MINUTES));
     }
-    
+
     return order_valid;
   }
 }
@@ -398,12 +398,12 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
           break;
         }
       }
-      
+
       datetime time_0 = iTime(_Symbol, timeframe, entry_shift);     // entry_time candle
       datetime time_1 = iTime(_Symbol, timeframe, entry_shift + 1); // 1 candle before entry_time
       datetime time_2 = iTime(_Symbol, timeframe, entry_shift + 2); // 2 candles before entry_time
       datetime time_3 = iTime(_Symbol, timeframe, entry_shift + 3); // 3 candles before entry_time
-      
+
       PrintFormat("▼ Bands[%d] (tf = %s)  (period = %d)", i, tf_str, b.indicator_period);
       PrintFormat("  values:      [%s@%s, %s@%s, %s@%s, %s@%s]",
                   P(b.bands_percent_0, 2), TimeToString(time_0, TIME_MINUTES),
@@ -473,12 +473,12 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
           break;
         }
       }
-      
+
       datetime time_0 = iTime(_Symbol, timeframe, entry_shift);     // entry_time candle
       datetime time_1 = iTime(_Symbol, timeframe, entry_shift + 1); // 1 candle before entry_time
       datetime time_2 = iTime(_Symbol, timeframe, entry_shift + 2); // 2 candles before entry_time
       datetime time_3 = iTime(_Symbol, timeframe, entry_shift + 3); // 3 candles before entry_time
-      
+
       PrintFormat("▼ Stochastic[%d] (tf = %s)  (period = %d)", i, tf_str, s.indicator_period);
       PrintFormat("  values:      [%s@%s, %s@%s, %s@%s, %s@%s]",
                   P(s.stochastic_0, 2), TimeToString(time_0, TIME_MINUTES),
@@ -536,12 +536,12 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
           break;
         }
       }
-      
+
       datetime time_0 = iTime(_Symbol, timeframe, entry_shift);     // entry_time candle
       datetime time_1 = iTime(_Symbol, timeframe, entry_shift + 1); // 1 candle before entry_time
       datetime time_2 = iTime(_Symbol, timeframe, entry_shift + 2); // 2 candles before entry_time
       datetime time_3 = iTime(_Symbol, timeframe, entry_shift + 3); // 3 candles before entry_time
-      
+
       PrintFormat("▼ BodyMA[%d] (tf = %s)  (period = %d)", i, tf_str, bm.indicator_period);
       PrintFormat("  body_value:  [%s@%s, %s@%s, %s@%s, %s@%s]",
                   P(bm.body_value_0), TimeToString(time_0, TIME_MINUTES),
@@ -619,55 +619,55 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
     {
       const StochasticMarketStructure m = signal_params.stoch_market_structure_data[i];
       if(m.indicator_timeframe != timeframe) continue;
-      
+
       int n_extrema = ArraySize(m.extremum_stats);
       if(n_extrema == 0) continue;
-      
+
       any = true;
 
-      PrintFormat("▼ ExtremumStatistics[%d] (tf = %s)  (period = %d)  [%d extrema]", 
+      PrintFormat("▼ ExtremumStatistics[%d] (tf = %s)  (period = %d)  [%d extrema]",
                   i, tf_str, m.indicator_period, n_extrema);
-      
+
       // Log first 5 extrema (most recent)
       int max_log = MathMin(5, n_extrema);
       for(int j = 0; j < max_log; j++)
       {
         const ExtremumStatistics es = m.extremum_stats[j];
         string type_str = m.os_market_structures[j].is_peak ? "Peak" : "Bottom";
-        double price = m.os_market_structures[j].is_peak ? 
-                       m.os_market_structures[j].extremum_high : 
+        double price = m.os_market_structures[j].is_peak ?
+                       m.os_market_structures[j].extremum_high :
                        m.os_market_structures[j].extremum_low;
-        
-        PrintFormat("  [%d] %s @ %s (price=%.5f)", 
+
+        PrintFormat("  [%d] %s @ %s (price=%.5f)",
                     es.extremum_index,
                     type_str,
                     DtToStr(m.os_market_structures[j].extremum_time),
                     price);
-        PrintFormat("      INTERN: %.2f%% (ref=%.5f) %s", 
+        PrintFormat("      INTERN: %.2f%% (ref=%.5f) %s",
                     es.intern_fibo_level,
                     es.intern_reference_price,
                     es.intern_is_extension ? "[EXTENSION]" : "");
-        
+
         if(es.extern_is_active)
         {
           // Find timestamps of the reference extrema
           datetime ref_high_time = 0;
           datetime ref_low_time = 0;
-          
+
           for(int k = 0; k < n_extrema; k++)
           {
-            if(m.os_market_structures[k].is_peak && 
+            if(m.os_market_structures[k].is_peak &&
                MathAbs(m.os_market_structures[k].extremum_high - es.extern_oldest_high) < 0.00001)
             {
               ref_high_time = m.os_market_structures[k].extremum_time;
             }
-            if(!m.os_market_structures[k].is_peak && 
+            if(!m.os_market_structures[k].is_peak &&
                MathAbs(m.os_market_structures[k].extremum_low - es.extern_oldest_low) < 0.00001)
             {
               ref_low_time = m.os_market_structures[k].extremum_time;
             }
           }
-          
+
           PrintFormat("      EXTERN: %.2f%% broken=%d [ACTIVE]",
                       es.extern_fibo_level,
                       es.extern_structures_broken);
@@ -678,14 +678,14 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
                       es.extern_oldest_low,
                       ref_low_time > 0 ? DtToStr(ref_low_time) : "unknown");
         }
-        
+
         PrintFormat("      Structure: %s",
                     OscillatorStructureTypesToString(es.structure_type));
       }
-      
+
       if(n_extrema > 5)
         PrintFormat("  ... and %d more extrema (showing first 5 only)", n_extrema - 5);
-      
+
       Print("  ────────────────────────────────────────────────────────────────────");
 
       ++printed;
@@ -698,4 +698,3 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
 }
 
 #endif // _MICROSERVICES_UTILS_LOGS_HELPER_MQH_
-

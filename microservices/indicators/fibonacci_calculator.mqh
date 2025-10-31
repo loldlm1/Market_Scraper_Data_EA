@@ -249,4 +249,3 @@ void CalculateFibonacciLevels(
 }
 
 #endif // _MICROSERVICES_INDICATORS_FIBONACCI_CALCULATOR_MQH_
-

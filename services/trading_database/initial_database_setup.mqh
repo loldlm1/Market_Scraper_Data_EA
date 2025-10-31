@@ -26,7 +26,7 @@ bool OpenStatsDatabase()
   }
 
   // Habilitar WAL
-	DatabaseExecute(Database_Instance, "PRAGMA foreign_keys=ON;");
+  DatabaseExecute(Database_Instance, "PRAGMA foreign_keys=ON;");
   DatabaseExecute(Database_Instance, "PRAGMA automatic_index=ON;");
   DatabaseExecute(Database_Instance, "PRAGMA journal_mode=WAL;");
   DatabaseExecute(Database_Instance, "PRAGMA synchronous=NORMAL;");
@@ -40,18 +40,18 @@ bool OpenStatsDatabase()
 
 bool CreateStatisticsTables()
 {
-	// ── Tabla raíz: datasets de backtest/ingesta
+  // ── Tabla raíz: datasets de backtest/ingesta
   string create_market_datasets_db =
     "CREATE TABLE IF NOT EXISTS MarketDatasetsDB ("
     "  dataset_id TEXT PRIMARY KEY NOT NULL DEFAULT ("
-		"    lower("
-		"      hex(randomblob(4)) || '-' || "
-		"      hex(randomblob(2)) || '-' || "
-		"      '4' || substr(hex(randomblob(2)),2) || '-' || "
-		"      substr('89ab', 1 + abs(random()) % 4, 1) || substr(hex(randomblob(2)),2) || '-' || "
-		"      hex(randomblob(6))"
-		"    )"
-		"  ),"
+    "    lower("
+    "      hex(randomblob(4)) || '-' || "
+    "      hex(randomblob(2)) || '-' || "
+    "      '4' || substr(hex(randomblob(2)),2) || '-' || "
+    "      substr('89ab', 1 + abs(random()) % 4, 1) || substr(hex(randomblob(2)),2) || '-' || "
+    "      hex(randomblob(6))"
+    "    )"
+    "  ),"
     "  name             TEXT    NOT NULL,"         /* * input local */
     "  source           TEXT    DEFAULT '',"       /* * input local (ej. 'tester', 'live', 'import') */
     "  notes            TEXT    DEFAULT '',"       /* * input local */
@@ -78,7 +78,7 @@ bool CreateStatisticsTables()
   string create_signal_params_db =
     "CREATE TABLE IF NOT EXISTS SignalParamsDB ("
     "  signal_id    INTEGER PRIMARY KEY AUTOINCREMENT,"
-		"  dataset_id   TEXT     NOT NULL,"            /* FK -> MarketDatasetsDB */
+    "  dataset_id   TEXT     NOT NULL,"            /* FK -> MarketDatasetsDB */
     "  signal_type  INTEGER  NOT NULL DEFAULT 0,"   // enum SignalTypes
     "  signal_state INTEGER  NOT NULL DEFAULT 0,"   // enum SignalStates
     "  ticket_id    TEXT     DEFAULT '',"
@@ -88,14 +88,14 @@ bool CreateStatisticsTables()
     "  take_profit  REAL     NOT NULL DEFAULT 0,"
     "  lot_size     REAL     NOT NULL DEFAULT 0,"
     "  raw_profit   REAL     NOT NULL DEFAULT 0,"
-    "  entry_time   INTEGER  NOT NULL,"   					// UNIQUE abajo
-		"  close_time   INTEGER  NOT NULL DEFAULT 0,"
-		"  FOREIGN KEY(dataset_id) REFERENCES MarketDatasetsDB(dataset_id) ON DELETE CASCADE,"
-		"  UNIQUE(entry_time, signal_type)"
-		");";
+    "  entry_time   INTEGER  NOT NULL,"             // UNIQUE abajo
+    "  close_time   INTEGER  NOT NULL DEFAULT 0,"
+    "  FOREIGN KEY(dataset_id) REFERENCES MarketDatasetsDB(dataset_id) ON DELETE CASCADE,"
+    "  UNIQUE(entry_time, signal_type)"
+    ");";
   if(!DatabaseExecute(Database_Instance, create_signal_params_db)) return false;
 
-	if(!DatabaseExecute(Database_Instance, "CREATE INDEX IF NOT EXISTS idx_sp_entry_time_type ON SignalParamsDB(entry_time, signal_type);")) return false;
+  if(!DatabaseExecute(Database_Instance, "CREATE INDEX IF NOT EXISTS idx_sp_entry_time_type ON SignalParamsDB(entry_time, signal_type);")) return false;
 
   // ────────────────────────────────────────────────────────────────────
   // Bands por timeframe
@@ -254,7 +254,7 @@ bool CreateStatisticsTables()
     "  FOREIGN KEY(signal_id) REFERENCES SignalParamsDB(signal_id) ON DELETE CASCADE"
     ");";
   if(!DatabaseExecute(Database_Instance, create_extremum_stats)) return false;
-  
+
   if(!DatabaseExecute(Database_Instance, "CREATE INDEX IF NOT EXISTS idx_extremum_stats ON ExtremumStatisticsDB(signal_id, timeframe, period);")) return false;
 
   // ────────────────────────────────────────────────────────────────────
@@ -321,9 +321,9 @@ bool InitStatsDatabase()
   Database_Initial_Setup = true;
   Print("InitStatsDatabase: database is ready.");
 
-	if(Test_Mode) LogDbPath(Database_System_Name + "_db.sqlite", true);
+  if(Test_Mode) LogDbPath(Database_System_Name + "_db.sqlite", true);
 
-	return true;
+  return true;
 }
 
 // Útil para OnDeinit()

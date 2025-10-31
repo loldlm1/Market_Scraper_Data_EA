@@ -14,7 +14,7 @@ struct OscillatorMarketStructure
   double   extremum_low;
   double   extremum_stoch;
   datetime extremum_time;
-  
+
   // NEW: Type indicators for enhanced analysis
   bool     is_peak;         // True if peak, false if bottom
   int      sequence_index;  // Position in sequence (0 = most recent)
@@ -225,4 +225,3 @@ bool DetectMarketExtrema(
 }
 
 #endif // _MICROSERVICES_INDICATORS_EXTREMA_DETECTOR_MQH_
-

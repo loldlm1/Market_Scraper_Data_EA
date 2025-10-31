@@ -24,19 +24,19 @@ struct StructureTimePrice
 struct ExtremumStatistics
 {
   int      extremum_index;           // Position in array (0 = most recent)
-  
+
   // EXTREMUM_INTERN
   double   intern_fibo_level;        // Fib % from previous opposite extremum
   double   intern_reference_price;   // The reference price used
   bool     intern_is_extension;      // True if > 100%
-  
+
   // EXTREMUM_EXTERN
   double   extern_fibo_level;        // Fib % from oldest extremum range
   double   extern_oldest_high;       // Oldest peak reference
   double   extern_oldest_low;        // Oldest bottom reference
   int      extern_structures_broken; // Count of highs/lows exceeded
   bool     extern_is_active;         // True when intern >= 100%
-  
+
   // Structure classification
   OscillatorStructureTypes structure_type; // HH, HL, LL, LH, EQ
 
@@ -175,18 +175,18 @@ void ClassifyAllStructureTypes(
 ) {
   int array_size = ArraySize(extrema_array);
   ArrayResize(stats_array, array_size);
-  
+
   // Initialize all stats with extremum index
   for(int i = 0; i < array_size; i++)
   {
     stats_array[i].extremum_index = i;
   }
-  
+
   // Calculate structure types by comparing each extremum with the one 2 positions ahead
   for(int i = 0; i < array_size - 2; i++)
   {
     bool is_peak = extrema_array[i].is_peak;
-    
+
     if(is_peak)
     {
       // Compare peak with next peak (2 positions ahead)
@@ -210,7 +210,7 @@ void ClassifyAllStructureTypes(
       );
     }
   }
-  
+
   // Last 2 extrema don't have a comparison point, leave as EQ
   if(array_size >= 2)
   {
@@ -220,4 +220,3 @@ void ClassifyAllStructureTypes(
 }
 
 #endif // _MICROSERVICES_INDICATORS_STRUCTURE_CLASSIFIER_MQH_
-

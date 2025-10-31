@@ -47,7 +47,7 @@ struct StochasticMarketStructure
 
   // Secuencia completa de extremos detectados
   OscillatorMarketStructure os_market_structures[];
-  
+
   // NEW: Dynamic configuration and statistics
   int extrema_depth_config;           // Configurable depth (default 13)
   ExtremumStatistics extremum_stats[]; // Dynamic statistics array
@@ -107,7 +107,7 @@ struct StochasticMarketStructure
     fourth_fibonacci_level = other.fourth_fibonacci_level;
 
     ArrayCopy(os_market_structures, other.os_market_structures);
-    
+
     extrema_depth_config  = other.extrema_depth_config;
     ArrayCopy(extremum_stats, other.extremum_stats);
   }
@@ -198,7 +198,7 @@ struct StochasticMarketStructure
     int custom_depth = 13
   ) {
     extrema_depth_config = custom_depth;
-    
+
     bool initial_is_bottom = false;
     bool initial_is_peak   = false;
 

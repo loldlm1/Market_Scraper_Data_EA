@@ -9,4 +9,3 @@
 #include "trading_database/database_signal_wrapper.mqh"
 
 #endif // _SERVICES_TRADING_DATABASE_MQH_
-

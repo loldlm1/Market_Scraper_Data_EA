@@ -28,9 +28,9 @@ string SqlQuote(const string input_text)
 
 bool SignalExistsByEntryTimeType(SignalParams &signal_params, long &signal_id)
 {
-	// Consulta simple para verificar existencia por entry_time y signal_type
+  // Consulta simple para verificar existencia por entry_time y signal_type
   long entry_time_value  = (long)signal_params.entry_time;
-	int  signal_type_value = (int)signal_params.signal_type;
+  int  signal_type_value = (int)signal_params.signal_type;
 
   string signal_params_exists_query =
     "SELECT signal_id FROM SignalParamsDB "
@@ -42,16 +42,16 @@ bool SignalExistsByEntryTimeType(SignalParams &signal_params, long &signal_id)
   if(statement == INVALID_HANDLE)
   {
     Print("SignalExistsByEntryTimeType: prepare failed: ", GetLastError());
-		TesterStop();
+    TesterStop();
     return false;
   }
 
-	if(DatabaseRead(statement))
+  if(DatabaseRead(statement))
   {
     DatabaseColumnLong(statement, 0, signal_id);
   }
 
-	DatabaseFinalize(statement);
+  DatabaseFinalize(statement);
   return signal_id > 0;
 }
 
@@ -81,7 +81,7 @@ bool GetDatasetId(string name = "", string symbol = "")
   }
   DatabaseFinalize(statement);
 
-	if(ok) Print("GetDatasetId: dataset_id = ", g_dataset_id);
+  if(ok) Print("GetDatasetId: dataset_id = ", g_dataset_id);
 
   return ok;
 }
@@ -94,18 +94,18 @@ bool InsertMarketDatasetRecord(const string   name,
                                const string   tester_model = "",
                                const string   ea_version   = "")
 {
-	// Datos del broker/par
-  string symbol 			 = _Symbol;
+  // Datos del broker/par
+  string symbol        = _Symbol;
   int    symbol_digits = (int)SymbolInfoInteger(_Symbol, SYMBOL_DIGITS);
   int    spread_points = (int)SymbolInfoInteger(_Symbol, SYMBOL_SPREAD);
   int    build         = (int)TerminalInfoInteger(TERMINAL_BUILD);
 
-	// 1) ¿ya existe? (idempotente por clave natural)
+  // 1) ¿ya existe? (idempotente por clave natural)
   if(GetDatasetId(name, symbol)) return true;
 
   // Zona horaria local (minutos respecto a UTC)
   int tz_offset_minutes = (int)((long)TimeLocal() - (long)TimeGMT()) / 60;
-	datetime date_start   = iTime(_Symbol, PERIOD_CURRENT, 0);
+  datetime date_start   = iTime(_Symbol, PERIOD_CURRENT, 0);
   datetime date_end     = (datetime)SeriesInfoInteger(_Symbol, PERIOD_CURRENT, SERIES_LASTBAR_DATE);
 
   // 2) INSERT (dos cadenas)
@@ -150,7 +150,7 @@ bool InsertSignalParamsDBRecord(SignalParams &signal_params, long &signal_id)
 {
   signal_id = 0;
 
-	// Parte 1: columnas a insertar (orden fijado)
+  // Parte 1: columnas a insertar (orden fijado)
   string query_columns =
     "INSERT OR IGNORE INTO SignalParamsDB("
     "dataset_id, "
@@ -199,13 +199,13 @@ bool InsertSignalParamsDBRecord(SignalParams &signal_params, long &signal_id)
   // Ejecutar
   if(!DatabaseExecute(Database_Instance, insert_sql))
   {
-		WriteToFile("query_debug.txt", insert_sql);
-		Print("InsertSignalParamsDBRecord: insert failed: ", GetLastError());
-		TesterStop();
+    WriteToFile("query_debug.txt", insert_sql);
+    Print("InsertSignalParamsDBRecord: insert failed: ", GetLastError());
+    TesterStop();
     return false;
   }
 
-	// Recuperar el signal_id generado (o existente) por entry_time
+  // Recuperar el signal_id generado (o existente) por entry_time
   if(SignalExistsByEntryTimeType(signal_params, signal_id)) return true;
 
   // Fallback (poco probable si acabamos de insertar): recuperar por entry_time
@@ -230,7 +230,7 @@ bool InsertBandsByTF(const long signal_id, BandsPercentStructure &bands_arr[])
       "INSERT OR IGNORE INTO BandsPercentDB("
       "signal_id, "
       "timeframe, "
-			"period, "
+      "period, "
       "bands_percent_0, bands_percent_1, bands_percent_2, bands_percent_3, "
       "bands_percent_signal_0, bands_percent_signal_1, bands_percent_signal_2, bands_percent_signal_3, "
       "bands_percent_slope_0, bands_percent_slope_1, bands_percent_slope_2, bands_percent_slope_3, "
@@ -248,7 +248,7 @@ bool InsertBandsByTF(const long signal_id, BandsPercentStructure &bands_arr[])
     string query_values = "VALUES (";
     query_values += IntegerToString((long)signal_id) + ", ";
     query_values += IntegerToString((int)band_percent_data.indicator_timeframe) + ", ";
-		query_values += IntegerToString((int)band_percent_data.indicator_period) + ", ";
+    query_values += IntegerToString((int)band_percent_data.indicator_period) + ", ";
 
     query_values += DoubleToString(band_percent_data.bands_percent_0, 2) + ", ";
     query_values += DoubleToString(band_percent_data.bands_percent_1, 2) + ", ";
@@ -311,9 +311,9 @@ bool InsertBandsByTF(const long signal_id, BandsPercentStructure &bands_arr[])
 
     if(!DatabaseExecute(Database_Instance, insert_sql))
     {
-			WriteToFile("query_debug.txt", insert_sql);
-			Print("InsertBandsByTF: insert failed: ", GetLastError());
-			TesterStop();
+      WriteToFile("query_debug.txt", insert_sql);
+      Print("InsertBandsByTF: insert failed: ", GetLastError());
+      TesterStop();
       return false;
     }
   }
@@ -334,7 +334,7 @@ bool InsertStochByTF(const long signal_id, StochasticStructure &stoch_arr[])
       "INSERT OR IGNORE INTO StochasticDB("
       "signal_id, "
       "timeframe, "
-			"period, "
+      "period, "
       "stochastic_0, stochastic_1, stochastic_2, stochastic_3, "
       "stochastic_signal_0, stochastic_signal_1, stochastic_signal_2, stochastic_signal_3, "
       "stochastic_slope_0, stochastic_slope_1, stochastic_slope_2, stochastic_slope_3, "
@@ -348,7 +348,7 @@ bool InsertStochByTF(const long signal_id, StochasticStructure &stoch_arr[])
     string query_values = "VALUES (";
     query_values += IntegerToString((long)signal_id) + ", ";
     query_values += IntegerToString((int)stochastic_data.indicator_timeframe) + ", ";
-		query_values += IntegerToString((int)stochastic_data.indicator_period) + ", ";
+    query_values += IntegerToString((int)stochastic_data.indicator_period) + ", ";
 
     query_values += DoubleToString(stochastic_data.stochastic_0, 2) + ", ";
     query_values += DoubleToString(stochastic_data.stochastic_1, 2) + ", ";
@@ -391,9 +391,9 @@ bool InsertStochByTF(const long signal_id, StochasticStructure &stoch_arr[])
 
     if(!DatabaseExecute(Database_Instance, insert_sql))
     {
-			WriteToFile("query_debug.txt", insert_sql);
-			Print("InsertStochByTF: insert failed: ", GetLastError());
-			TesterStop();
+      WriteToFile("query_debug.txt", insert_sql);
+      Print("InsertStochByTF: insert failed: ", GetLastError());
+      TesterStop();
       return false;
     }
   }
@@ -476,7 +476,7 @@ bool InsertStochStructByTF(const long signal_id, StochasticMarketStructure &ms_a
       "INSERT OR IGNORE INTO StochasticMarketStructureDB("
       "signal_id, "
       "timeframe, "
-			"period, "
+      "period, "
       "first_structure_type, second_structure_type, third_structure_type, "
       "fourth_structure_type, fifth_structure_type, six_structure_type, "
       "first_structure_time, first_structure_price, "
@@ -490,31 +490,31 @@ bool InsertStochStructByTF(const long signal_id, StochasticMarketStructure &ms_a
     string query_values = "VALUES (";
     query_values += IntegerToString((long)signal_id) + ", ";
     query_values += IntegerToString((int)market_stoch_data.indicator_timeframe) + ", ";
-		query_values += IntegerToString((int)market_stoch_data.indicator_period) + ", ";
+    query_values += IntegerToString((int)market_stoch_data.indicator_period) + ", ";
 
     // Estructuras (ajusta min/max según tu enum)
-		query_values += SqlEnumValue((int)market_stoch_data.first_structure_type,  0, 6, DEF_OSC_STRUCT_TYPE) + ", ";
-		query_values += SqlEnumValue((int)market_stoch_data.second_structure_type, 0, 6, DEF_OSC_STRUCT_TYPE) + ", ";
-		query_values += SqlEnumValue((int)market_stoch_data.third_structure_type,  0, 6, DEF_OSC_STRUCT_TYPE) + ", ";
-		query_values += SqlEnumValue((int)market_stoch_data.fourth_structure_type, 0, 6, DEF_OSC_STRUCT_TYPE) + ", ";
-		query_values += SqlEnumValue((int)market_stoch_data.fifth_structure_type,  0, 6, DEF_OSC_STRUCT_TYPE) + ", ";
-		query_values += SqlEnumValue((int)market_stoch_data.six_structure_type,    0, 6, DEF_OSC_STRUCT_TYPE) + ", ";
+    query_values += SqlEnumValue((int)market_stoch_data.first_structure_type,  0, 6, DEF_OSC_STRUCT_TYPE) + ", ";
+    query_values += SqlEnumValue((int)market_stoch_data.second_structure_type, 0, 6, DEF_OSC_STRUCT_TYPE) + ", ";
+    query_values += SqlEnumValue((int)market_stoch_data.third_structure_type,  0, 6, DEF_OSC_STRUCT_TYPE) + ", ";
+    query_values += SqlEnumValue((int)market_stoch_data.fourth_structure_type, 0, 6, DEF_OSC_STRUCT_TYPE) + ", ";
+    query_values += SqlEnumValue((int)market_stoch_data.fifth_structure_type,  0, 6, DEF_OSC_STRUCT_TYPE) + ", ";
+    query_values += SqlEnumValue((int)market_stoch_data.six_structure_type,    0, 6, DEF_OSC_STRUCT_TYPE) + ", ";
 
-		// Tiempos y precios
-		query_values += SqlEpochValue((long)market_stoch_data.first_structure_time)   + ", ";
-		query_values += SqlPriceValue(market_stoch_data.first_structure_price)        + ", ";
-		query_values += SqlEpochValue((long)market_stoch_data.second_structure_time)  + ", ";
-		query_values += SqlPriceValue(market_stoch_data.second_structure_price)       + ", ";
-		query_values += SqlEpochValue((long)market_stoch_data.third_structure_time)   + ", ";
-		query_values += SqlPriceValue(market_stoch_data.third_structure_price)        + ", ";
-		query_values += SqlEpochValue((long)market_stoch_data.fourth_structure_time)  + ", ";
-		query_values += SqlPriceValue(market_stoch_data.fourth_structure_price)       + ", ";
+    // Tiempos y precios
+    query_values += SqlEpochValue((long)market_stoch_data.first_structure_time)   + ", ";
+    query_values += SqlPriceValue(market_stoch_data.first_structure_price)        + ", ";
+    query_values += SqlEpochValue((long)market_stoch_data.second_structure_time)  + ", ";
+    query_values += SqlPriceValue(market_stoch_data.second_structure_price)       + ", ";
+    query_values += SqlEpochValue((long)market_stoch_data.third_structure_time)   + ", ";
+    query_values += SqlPriceValue(market_stoch_data.third_structure_price)        + ", ";
+    query_values += SqlEpochValue((long)market_stoch_data.fourth_structure_time)  + ", ";
+    query_values += SqlPriceValue(market_stoch_data.fourth_structure_price)       + ", ";
 
-		// Fibo levels (0..100)
-		query_values += SqlFiboValue(market_stoch_data.first_fibonacci_level)  + ", ";
-		query_values += SqlFiboValue(market_stoch_data.second_fibonacci_level) + ", ";
-		query_values += SqlFiboValue(market_stoch_data.third_fibonacci_level)  + ", ";
-		query_values += SqlFiboValue(market_stoch_data.fourth_fibonacci_level);
+    // Fibo levels (0..100)
+    query_values += SqlFiboValue(market_stoch_data.first_fibonacci_level)  + ", ";
+    query_values += SqlFiboValue(market_stoch_data.second_fibonacci_level) + ", ";
+    query_values += SqlFiboValue(market_stoch_data.third_fibonacci_level)  + ", ";
+    query_values += SqlFiboValue(market_stoch_data.fourth_fibonacci_level);
 
     query_values += ");";
 
@@ -522,9 +522,9 @@ bool InsertStochStructByTF(const long signal_id, StochasticMarketStructure &ms_a
 
     if(!DatabaseExecute(Database_Instance, insert_sql))
     {
-			WriteToFile("query_debug.txt", insert_sql);
-			Print("InsertStochStructByTF: insert failed: ", GetLastError());
-			TesterStop();
+      WriteToFile("query_debug.txt", insert_sql);
+      Print("InsertStochStructByTF: insert failed: ", GetLastError());
+      TesterStop();
       return false;
     }
   }
@@ -543,16 +543,16 @@ bool InsertExtremumStatistics(const long signal_id, StochasticMarketStructure &m
   {
     StochasticMarketStructure market_stoch_data = ms_arr[i];
     int stats_count = ArraySize(market_stoch_data.extremum_stats);
-    
+
     // Insert each extremum statistic
     for(int j = 0; j < stats_count; ++j)
     {
       ExtremumStatistics stats = market_stoch_data.extremum_stats[j];
       OscillatorMarketStructure extremum = market_stoch_data.os_market_structures[j];
-      
+
       // Determine extremum price based on type
       double extremum_price = extremum.is_peak ? extremum.extremum_high : extremum.extremum_low;
-      
+
       // Build INSERT query
       string query_columns =
         "INSERT OR IGNORE INTO ExtremumStatisticsDB("
@@ -562,37 +562,37 @@ bool InsertExtremumStatistics(const long signal_id, StochasticMarketStructure &m
         "extern_fibo_level, extern_oldest_high, extern_oldest_low, "
         "extern_structures_broken, extern_is_active, structure_type"
         ") ";
-      
+
       string query_values = "VALUES (";
       query_values += IntegerToString(signal_id) + ", ";
       query_values += IntegerToString((int)market_stoch_data.indicator_timeframe) + ", ";
       query_values += IntegerToString((int)market_stoch_data.indicator_period) + ", ";
       query_values += IntegerToString(stats.extremum_index) + ", ";
-      
+
       // Extremum data
       query_values += SqlEpochValue((long)extremum.extremum_time) + ", ";
       query_values += SqlPriceValue(extremum_price) + ", ";
       query_values += (extremum.is_peak ? "1" : "0") + ", ";
-      
+
       // EXTREMUM_INTERN stats
       query_values += SqlFiboValue(stats.intern_fibo_level) + ", ";
       query_values += SqlPriceValue(stats.intern_reference_price) + ", ";
       query_values += (stats.intern_is_extension ? "1" : "0") + ", ";
-      
+
       // EXTREMUM_EXTERN stats
       query_values += SqlFiboValue(stats.extern_fibo_level) + ", ";
       query_values += SqlPriceValue(stats.extern_oldest_high) + ", ";
       query_values += SqlPriceValue(stats.extern_oldest_low) + ", ";
       query_values += IntegerToString(stats.extern_structures_broken) + ", ";
       query_values += (stats.extern_is_active ? "1" : "0") + ", ";
-      
+
       // Structure type
       query_values += SqlEnumValue((int)stats.structure_type, 0, 6, DEF_OSC_STRUCT_TYPE);
-      
+
       query_values += ");";
-      
+
       const string insert_sql = query_columns + query_values;
-      
+
       if(!DatabaseExecute(Database_Instance, insert_sql))
       {
         WriteToFile("query_debug.txt", insert_sql);
@@ -606,7 +606,7 @@ bool InsertExtremumStatistics(const long signal_id, StochasticMarketStructure &m
 }
 
 // ───────────────────────────────────────────────────────────────────────
-// Insert completo con transacción (SignalParamsDB + hijos)							 |
+// Insert completo con transacción (SignalParamsDB + hijos)               |
 // ───────────────────────────────────────────────────────────────────────
 bool SaveFullSignalTransaction(SignalParams &signal_params)
 {
@@ -616,21 +616,21 @@ bool SaveFullSignalTransaction(SignalParams &signal_params)
   if(!DatabaseExecute(Database_Instance, "BEGIN IMMEDIATE TRANSACTION;"))
   {
     Print("SaveFullSignalTransaction: BEGIN failed: ", GetLastError());
-		TesterStop();
+    TesterStop();
     return false;
   }
 
-	// Early return si ya existe (evitar duplicados y lógica innecesaria)
+  // Early return si ya existe (evitar duplicados y lógica innecesaria)
   if(SignalExistsByEntryTimeType(signal_params, signal_id))
-	{
-		Log_Custom("Signal [EXISTS] in DB with signal_id: " + IntegerToString(signal_id) +
-									 ", entry_time: " + TimeToString(signal_params.entry_time, TIME_DATE|TIME_SECONDS) +
-									 ", type: " + EnumToString(signal_params.signal_type) +
-									 ", state: " + EnumToString(signal_params.signal_state) +
-									 ", ticket_id: " + signal_params.ticket_id);
-		DatabaseExecute(Database_Instance, "ROLLBACK;");
-		return true; // Ya existe, no hacer nada
-	}
+  {
+    Log_Custom("Signal [EXISTS] in DB with signal_id: " + IntegerToString(signal_id) +
+                   ", entry_time: " + TimeToString(signal_params.entry_time, TIME_DATE|TIME_SECONDS) +
+                   ", type: " + EnumToString(signal_params.signal_type) +
+                   ", state: " + EnumToString(signal_params.signal_state) +
+                   ", ticket_id: " + signal_params.ticket_id);
+    DatabaseExecute(Database_Instance, "ROLLBACK;");
+    return true; // Ya existe, no hacer nada
+  }
 
   bool inserted_signal_params = InsertSignalParamsDBRecord(signal_params, signal_id);
 
@@ -638,7 +638,7 @@ bool SaveFullSignalTransaction(SignalParams &signal_params)
   if(!inserted_signal_params && signal_id <= 0)
   {
     Print("SaveFullSignalTransaction: inserted_signal_params failed and no existing id.");
-		TesterStop();
+    TesterStop();
     DatabaseExecute(Database_Instance, "ROLLBACK;");
     return false;
   }
@@ -655,15 +655,15 @@ bool SaveFullSignalTransaction(SignalParams &signal_params)
     if(!DatabaseExecute(Database_Instance, "COMMIT;"))
     {
       Print("SaveFullSignalTransaction: COMMIT failed: ", GetLastError());
-			TesterStop();
+      TesterStop();
       return false;
     }
 
-		Log_Custom("Signal [STORED] to DB with signal_id: " + IntegerToString(signal_id) +
-									 ", entry_time: " + TimeToString(signal_params.entry_time, TIME_DATE|TIME_SECONDS) +
-									 ", type: " + EnumToString(signal_params.signal_type) +
-									 ", state: " + EnumToString(signal_params.signal_state) +
-									 ", ticket_id: " + signal_params.ticket_id);
+    Log_Custom("Signal [STORED] to DB with signal_id: " + IntegerToString(signal_id) +
+                   ", entry_time: " + TimeToString(signal_params.entry_time, TIME_DATE|TIME_SECONDS) +
+                   ", type: " + EnumToString(signal_params.signal_type) +
+                   ", state: " + EnumToString(signal_params.signal_state) +
+                   ", ticket_id: " + signal_params.ticket_id);
     return true;
   }
 

@@ -264,4 +264,3 @@ void QuickSortByEntryTimeAsc(ARR11 &arr[], int left, int right)
 }
 
 #endif // _MICROSERVICES_UTILS_ARRAY_FUNCTIONS_MQH_
-

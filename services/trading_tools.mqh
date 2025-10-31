@@ -15,4 +15,3 @@
 #include "../microservices/utils/logs_helper.mqh"
 
 #endif // _SERVICES_TRADING_TOOLS_MQH_
-

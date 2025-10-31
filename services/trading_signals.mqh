@@ -16,4 +16,3 @@
 #include "trading_signals/tick_signals_manager.mqh"
 
 #endif // _SERVICES_TRADING_SIGNALS_MQH_
-

@@ -243,18 +243,18 @@ struct BandsPercentStructure
 
     // ROUNDS TO 2 DECIMALS FOR PERCENTAGE VALUES
     double value = NormalizeDouble(bands_percent_value[index], 2);
-    
+
     // TIMESTAMP VERIFICATION LOGGING (M1 ONLY)
     if(Enable_Verification_Logs && bands_indicator_handle.indicator_timeframe == PERIOD_M1)
     {
       datetime candle_time = iTime(_Symbol, bands_indicator_handle.indicator_timeframe, index);
-      PrintFormat("[VERIFY-BandsPct] TF=%s, Shift=%d, Time=%s, Value=%.2f", 
-                  TimeframeToString(bands_indicator_handle.indicator_timeframe), 
-                  index, 
-                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES), 
+      PrintFormat("[VERIFY-BandsPct] TF=%s, Shift=%d, Time=%s, Value=%.2f",
+                  TimeframeToString(bands_indicator_handle.indicator_timeframe),
+                  index,
+                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES),
                   value);
     }
-    
+
     return value;
   }
 
@@ -271,18 +271,18 @@ struct BandsPercentStructure
 
     // ROUNDS TO 2 DECIMALS FOR PERCENTAGE VALUES
     double value = NormalizeDouble(bands_percent_signal_value[index], 2);
-    
+
     // TIMESTAMP VERIFICATION LOGGING (M1 ONLY)
     if(Enable_Verification_Logs && bands_indicator_handle.indicator_timeframe == PERIOD_M1)
     {
       datetime candle_time = iTime(_Symbol, bands_indicator_handle.indicator_timeframe, index);
-      PrintFormat("[VERIFY-BandsPctSignal] TF=%s, Shift=%d, Time=%s, Value=%.2f", 
-                  TimeframeToString(bands_indicator_handle.indicator_timeframe), 
-                  index, 
-                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES), 
+      PrintFormat("[VERIFY-BandsPctSignal] TF=%s, Shift=%d, Time=%s, Value=%.2f",
+                  TimeframeToString(bands_indicator_handle.indicator_timeframe),
+                  index,
+                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES),
                   value);
     }
-    
+
     return value;
   }
 
@@ -372,18 +372,18 @@ struct BandsPercentStructure
 
     // ROUNDS TO 2 DECIMALS FOR PERCENTAGE VALUES
     double value = NormalizeDouble(bb_close_value[index], 2);
-    
+
     // TIMESTAMP VERIFICATION LOGGING (M1 ONLY)
     if(Enable_Verification_Logs && bands_indicator_handle.indicator_timeframe == PERIOD_M1)
     {
       datetime candle_time = iTime(_Symbol, bands_indicator_handle.indicator_timeframe, index);
-      PrintFormat("[VERIFY-BB_Close] TF=%s, Shift=%d, Time=%s, Value=%.2f", 
-                  TimeframeToString(bands_indicator_handle.indicator_timeframe), 
-                  index, 
-                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES), 
+      PrintFormat("[VERIFY-BB_Close] TF=%s, Shift=%d, Time=%s, Value=%.2f",
+                  TimeframeToString(bands_indicator_handle.indicator_timeframe),
+                  index,
+                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES),
                   value);
     }
-    
+
     return value;
   }
 
@@ -400,18 +400,18 @@ struct BandsPercentStructure
 
     // ROUNDS TO 2 DECIMALS FOR PERCENTAGE VALUES
     double value = NormalizeDouble(bb_open_value[index], 2);
-    
+
     // TIMESTAMP VERIFICATION LOGGING (M1 ONLY)
     if(Enable_Verification_Logs && bands_indicator_handle.indicator_timeframe == PERIOD_M1)
     {
       datetime candle_time = iTime(_Symbol, bands_indicator_handle.indicator_timeframe, index);
-      PrintFormat("[VERIFY-BB_Open] TF=%s, Shift=%d, Time=%s, Value=%.2f", 
-                  TimeframeToString(bands_indicator_handle.indicator_timeframe), 
-                  index, 
-                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES), 
+      PrintFormat("[VERIFY-BB_Open] TF=%s, Shift=%d, Time=%s, Value=%.2f",
+                  TimeframeToString(bands_indicator_handle.indicator_timeframe),
+                  index,
+                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES),
                   value);
     }
-    
+
     return value;
   }
 
@@ -428,18 +428,18 @@ struct BandsPercentStructure
 
     // ROUNDS TO 2 DECIMALS FOR PERCENTAGE VALUES
     double value = NormalizeDouble(bb_high_value[index], 2);
-    
+
     // TIMESTAMP VERIFICATION LOGGING (M1 ONLY)
     if(Enable_Verification_Logs && bands_indicator_handle.indicator_timeframe == PERIOD_M1)
     {
       datetime candle_time = iTime(_Symbol, bands_indicator_handle.indicator_timeframe, index);
-      PrintFormat("[VERIFY-BB_High] TF=%s, Shift=%d, Time=%s, Value=%.2f", 
-                  TimeframeToString(bands_indicator_handle.indicator_timeframe), 
-                  index, 
-                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES), 
+      PrintFormat("[VERIFY-BB_High] TF=%s, Shift=%d, Time=%s, Value=%.2f",
+                  TimeframeToString(bands_indicator_handle.indicator_timeframe),
+                  index,
+                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES),
                   value);
     }
-    
+
     return value;
   }
 
@@ -456,21 +456,20 @@ struct BandsPercentStructure
 
     // ROUNDS TO 2 DECIMALS FOR PERCENTAGE VALUES
     double value = NormalizeDouble(bb_low_value[index], 2);
-    
+
     // TIMESTAMP VERIFICATION LOGGING (M1 ONLY)
     if(Enable_Verification_Logs && bands_indicator_handle.indicator_timeframe == PERIOD_M1)
     {
       datetime candle_time = iTime(_Symbol, bands_indicator_handle.indicator_timeframe, index);
-      PrintFormat("[VERIFY-BB_Low] TF=%s, Shift=%d, Time=%s, Value=%.2f", 
-                  TimeframeToString(bands_indicator_handle.indicator_timeframe), 
-                  index, 
-                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES), 
+      PrintFormat("[VERIFY-BB_Low] TF=%s, Shift=%d, Time=%s, Value=%.2f",
+                  TimeframeToString(bands_indicator_handle.indicator_timeframe),
+                  index,
+                  TimeToString(candle_time, TIME_DATE|TIME_MINUTES),
                   value);
     }
-    
+
     return value;
   }
 };
 
 #endif // _MICROSERVICES_INDICATORS_BANDS_PERCENT_INDICATOR_MQH_
-

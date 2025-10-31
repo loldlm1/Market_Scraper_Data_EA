@@ -30,21 +30,21 @@ void UpdateEARunningMagic()
 
 int ChartWindowPosition()
 {
-	int  	 eas_total	 = 1;
-	long 	 chartID 		 = ChartFirst();
+  int     eas_total   = 1;
+  long    chartID      = ChartFirst();
 
   if(chartID == ChartID()) return 1;
 
-	while(chartID > 0)
-	{
-		chartID    = ChartNext(chartID);
+  while(chartID > 0)
+  {
+    chartID    = ChartNext(chartID);
     eas_total += 1;
 
     if(chartID == ChartID()) break;
-		if(chartID <= 0) break;
-	}
+    if(chartID <= 0) break;
+  }
 
-	return eas_total;
+  return eas_total;
 }
 
 #endif // _SERVICES_FRONTEND_EA_LICENSE_LIGHT_VERSION_MQH_

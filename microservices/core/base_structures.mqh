@@ -25,4 +25,3 @@ struct IndicatorsHandleInfo
 };
 
 #endif // _MICROSERVICES_CORE_BASE_STRUCTURES_MQH_
-

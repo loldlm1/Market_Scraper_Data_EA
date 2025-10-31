@@ -19,7 +19,7 @@ double CalculateExtremumIntern(
 ) {
   double current_price = current_is_peak ? current.extremum_high : current.extremum_low;
   double reference_price = current_is_peak ? previous_opposite.extremum_low : previous_opposite.extremum_high;
-  
+
   if(current_is_peak)
   {
     // Peak: calculate percentage from bottom to peak
@@ -44,17 +44,17 @@ int CountStructuresBroken(
   bool is_peak
 ) {
   if(reference_index < 0) return 0;
-  
+
   int broken_count = 0;
   double current_price = is_peak ? extrema_array[current_index].extremum_high : extrema_array[current_index].extremum_low;
-  
+
   // Count same-type extrema BETWEEN current and reference that were broken
   for(int i = current_index + 1; i <= reference_index; i++)
   {
     if(extrema_array[i].is_peak == is_peak)
     {
       double compare_price = is_peak ? extrema_array[i].extremum_high : extrema_array[i].extremum_low;
-      
+
       if(is_peak)
       {
         // For peaks: count intermediate peaks lower than current (broken through)
@@ -67,7 +67,7 @@ int CountStructuresBroken(
       }
     }
   }
-  
+
   return broken_count;
 }
 
@@ -242,26 +242,26 @@ void CalculateAllExtremumStatistics(
   ExtremumStatistics &stats_array[]
 ) {
   int array_size = ArraySize(extrema_array);
-  
+
   if(array_size < 2)
   {
     ArrayResize(stats_array, 0);
     return;
   }
-  
+
   // First classify all structure types
   ClassifyAllStructureTypes(extrema_array, stats_array);
-  
+
   // Calculate EXTREMUM_INTERN for each extremum
   // INTERN measures: from previous opposite extremum to current, relative to previous same-type extremum
   for(int i = 0; i < array_size; i++)
   {
     bool current_is_peak = extrema_array[i].is_peak;
-    
+
     // Find previous opposite extremum (immediately before current)
     int prev_opposite_index = -1;
     int prev_same_type_index = -1;
-    
+
     for(int j = i + 1; j < array_size; j++)
     {
       if(extrema_array[j].is_peak != current_is_peak && prev_opposite_index == -1)
@@ -274,21 +274,21 @@ void CalculateAllExtremumStatistics(
         break; // Found both, can stop
       }
     }
-    
+
     // Need at least previous opposite extremum to calculate INTERN
     if(prev_opposite_index >= 0)
     {
       double current_price = current_is_peak ? extrema_array[i].extremum_high : extrema_array[i].extremum_low;
       double reference_price = current_is_peak ? extrema_array[prev_opposite_index].extremum_low : extrema_array[prev_opposite_index].extremum_high;
-      
+
       stats_array[i].intern_reference_price = reference_price;
-      
+
       if(current_is_peak)
       {
         // For Peak: measure from previous bottom (0%) to current peak
         // If we have previous peak, that's the 100% mark
         double prev_peak_price = (prev_same_type_index >= 0) ? extrema_array[prev_same_type_index].extremum_high : current_price;
-        
+
         // Calculate percentage: current position from bottom relative to (previous peak - bottom) range
         if(prev_peak_price > reference_price)
         {
@@ -301,10 +301,10 @@ void CalculateAllExtremumStatistics(
       }
       else
       {
-        // For Bottom: measure from previous peak (0%) to current bottom  
+        // For Bottom: measure from previous peak (0%) to current bottom
         // If we have previous bottom, that's the 100% mark
         double prev_bottom_price = (prev_same_type_index >= 0) ? extrema_array[prev_same_type_index].extremum_low : current_price;
-        
+
         // Calculate percentage: current position from peak relative to (peak - previous bottom) range
         if(reference_price > prev_bottom_price)
         {
@@ -315,18 +315,18 @@ void CalculateAllExtremumStatistics(
           stats_array[i].intern_fibo_level = 100.0; // Default if no valid range
         }
       }
-      
+
       // Snap to nearest DefaultFibonacciLevel and normalize
       double next_level = 0;
       stats_array[i].intern_fibo_level = GetPreciseEntryLevelDefault(stats_array[i].intern_fibo_level, next_level);
-      
+
       // Check if extension (>100%)
       stats_array[i].intern_is_extension = (stats_array[i].intern_fibo_level > 100.0);
 
       // EXTERN is active only when INTERN >= 100% (full retest or breakout scenario)
       // This includes retests (100%) and extensions (>100%)
       stats_array[i].extern_is_active = (stats_array[i].intern_fibo_level >= 100.0);
-      
+
       // Calculate EXTERN using the same reference structure as INTERN
       if(stats_array[i].extern_is_active)
       {
@@ -343,4 +343,3 @@ void CalculateAllExtremumStatistics(
 }
 
 #endif // _MICROSERVICES_INDICATORS_EXTREMUM_STATISTICS_CALCULATOR_MQH_
-

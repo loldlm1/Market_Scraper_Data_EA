@@ -75,4 +75,3 @@ enum BodyMATypes
 };
 
 #endif // _MICROSERVICES_CORE_ENUMS_MQH_
-
