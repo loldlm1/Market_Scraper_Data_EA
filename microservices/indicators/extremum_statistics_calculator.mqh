@@ -288,7 +288,7 @@ void UpdateRetestCounters(
     resistance_context_active[z] = false;
   }
 
-  // Pass 1 (oldest -> newest): accumulate support counters and track peaks contexts
+  // Single pass (oldest -> newest): manage support (bottoms) and resistance (peaks)
   for(int i = array_size - 1; i >= 0; --i)
   {
     bool is_peak = extrema_array[i].is_peak;
@@ -299,60 +299,6 @@ void UpdateRetestCounters(
       stats_array[i].fibo_retest_zones[z].support_retest_count = 0;
       stats_array[i].fibo_retest_zones[z].resistance_retest_count = 0;
     }
-
-    if(is_peak) continue;
-
-    for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
-    {
-      double zone_low = stats_array[i].fibo_retest_zones[z].zone_price_low;
-      double zone_high = stats_array[i].fibo_retest_zones[z].zone_price_high;
-      bool has_price_range = (zone_high > zone_low) && (zone_low != 0.0 || zone_high != 0.0);
-      double extern_high = stats_array[i].extern_oldest_high;
-      double extern_low  = stats_array[i].extern_oldest_low;
-      bool context_valid = has_price_range && HasValidRetestContext(extern_high, extern_low);
-
-      if(!context_valid)
-      {
-        support_context_active[z] = false;
-        support_counter[z] = 0;
-        continue;
-      }
-
-      bool zone_hit = stats_array[i].fibo_retest_zones[z].zone_hit;
-
-      bool same_support_context = support_context_active[z] &&
-        IsSameRetestContext(extern_high, extern_low, support_context_high[z], support_context_low[z], price_epsilon);
-
-      if(!same_support_context)
-      {
-        support_context_active[z] = true;
-        support_context_high[z] = extern_high;
-        support_context_low[z] = extern_low;
-        support_counter[z] = 0;
-      }
-
-      if(zone_hit)
-      {
-        support_counter[z]++;
-        stats_array[i].fibo_retest_zones[z].support_retest_trigger = true;
-      }
-
-      stats_array[i].fibo_retest_zones[z].support_retest_count = support_counter[z];
-    }
-  }
-
-  // Pass 2 (oldest -> newest): accumulate resistance counters for peaks
-  for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
-  {
-    resistance_counter[z] = 0;
-    resistance_context_active[z] = false;
-    resistance_context_high[z] = 0.0;
-    resistance_context_low[z] = 0.0;
-  }
-
-  for(int i = array_size - 1; i >= 0; --i)
-  {
-    bool is_peak = extrema_array[i].is_peak;
 
     for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
     {
@@ -370,22 +316,27 @@ void UpdateRetestCounters(
           resistance_context_active[z] = false;
           resistance_counter[z] = 0;
         }
+        else
+        {
+          support_context_active[z] = false;
+          support_counter[z] = 0;
+        }
         continue;
       }
 
       bool zone_hit = stats_array[i].fibo_retest_zones[z].zone_hit;
 
-      bool same_resistance_context = resistance_context_active[z] &&
-        IsSameRetestContext(
-          extern_high,
-          extern_low,
-          resistance_context_high[z],
-          resistance_context_low[z],
-          price_epsilon
-        );
-
       if(is_peak)
       {
+        bool same_resistance_context = resistance_context_active[z] &&
+          IsSameRetestContext(
+            extern_high,
+            extern_low,
+            resistance_context_high[z],
+            resistance_context_low[z],
+            price_epsilon
+          );
+
         if(!same_resistance_context)
         {
           resistance_context_active[z] = true;
@@ -404,9 +355,44 @@ void UpdateRetestCounters(
         continue;
       }
 
-      if(!same_resistance_context) continue;
+      bool same_support_context = support_context_active[z] &&
+        IsSameRetestContext(
+          extern_high,
+          extern_low,
+          support_context_high[z],
+          support_context_low[z],
+          price_epsilon
+        );
 
-      stats_array[i].fibo_retest_zones[z].resistance_retest_count = resistance_counter[z];
+      if(!same_support_context)
+      {
+        support_context_active[z] = true;
+        support_context_high[z] = extern_high;
+        support_context_low[z] = extern_low;
+        support_counter[z] = 0;
+      }
+
+      if(zone_hit)
+      {
+        support_counter[z]++;
+        stats_array[i].fibo_retest_zones[z].support_retest_trigger = true;
+      }
+
+      stats_array[i].fibo_retest_zones[z].support_retest_count = support_counter[z];
+
+      if(
+        resistance_context_active[z] &&
+        IsSameRetestContext(
+          extern_high,
+          extern_low,
+          resistance_context_high[z],
+          resistance_context_low[z],
+          price_epsilon
+        )
+      )
+      {
+        stats_array[i].fibo_retest_zones[z].resistance_retest_count = resistance_counter[z];
+      }
     }
   }
 }
