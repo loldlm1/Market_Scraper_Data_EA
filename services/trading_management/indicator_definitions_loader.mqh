@@ -24,6 +24,7 @@ IndicatorsHandleInfo ExtBodyMAIndicatorsHandle[];
 int start_bands_indicators_load = 3;
 int total_bands_indicators_load = 1;
 int total_stoch_indicators_load = 1;
+int total_tf_list_load          = ArraySize(TF_LIST);
 
 // INPUT SETTINGS
 input group  "+= Developer Debug Settings =+";
@@ -37,9 +38,10 @@ void LoadAllIndicatorDefinitions()
   // OVERRIDE TOTAL INDICATORS TO LOAD FOR TESTING PURPOSES
   if(Test_Mode)
   {
-     start_bands_indicators_load = 0;
+    start_bands_indicators_load = 0;
     total_bands_indicators_load = 1;
     total_stoch_indicators_load = 1;
+    total_tf_list_load          = 1;
   }
 
   // HIDE INDICATORS VARIANTS
@@ -57,7 +59,7 @@ void LoadAllIndicatorDefinitions()
 
 void LoadAllBandsIndicators()
 {
-  for(int i = 0; i < ArraySize(TF_LIST); ++i)
+  for(int i = 0; i < total_tf_list_load; ++i)
   {
     ENUM_TIMEFRAMES trend_timeframe = TF_LIST[i];
     int total_periods_load = start_bands_indicators_load+total_bands_indicators_load;
@@ -86,7 +88,7 @@ void LoadAllBandsIndicators()
 
 void LoadAllBPercentIndicators()
 {
-  for(int i = 0; i < ArraySize(TF_LIST); ++i)
+  for(int i = 0; i < total_tf_list_load; ++i)
   {
     ENUM_TIMEFRAMES trend_timeframe = TF_LIST[i];
     int total_periods_load = start_bands_indicators_load+total_bands_indicators_load;
@@ -115,7 +117,7 @@ void LoadAllBPercentIndicators()
 
 void LoadAllStochIndicators()
 {
-  for(int i = 0; i < ArraySize(TF_LIST); ++i)
+  for(int i = 0; i < total_tf_list_load; ++i)
   {
     ENUM_TIMEFRAMES trend_timeframe = TF_LIST[i];
 
@@ -143,7 +145,7 @@ void LoadAllStochIndicators()
 
 void LoadAllStructStochIndicators()
 {
-  for(int i = 0; i < ArraySize(TF_LIST); ++i)
+  for(int i = 0; i < total_tf_list_load; ++i)
   {
     ENUM_TIMEFRAMES trend_timeframe = TF_LIST[i];
 
@@ -171,7 +173,7 @@ void LoadAllStructStochIndicators()
 
 void LoadAllBodyMAIndicators()
 {
-  for(int i = 0; i < ArraySize(TF_LIST); ++i)
+  for(int i = 0; i < total_tf_list_load; ++i)
   {
     ENUM_TIMEFRAMES trend_timeframe = TF_LIST[i];
 

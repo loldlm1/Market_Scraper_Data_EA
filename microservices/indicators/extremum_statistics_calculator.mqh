@@ -225,6 +225,34 @@ void CalculateExtremumExtern(
 }
 
 //+------------------------------------------------------------------+
+//| Helper: validate that EXTREN range context is usable             |
+//+------------------------------------------------------------------+
+bool HasValidRetestContext(double range_high, double range_low)
+{
+  if(range_high == -DBL_MAX || range_low == DBL_MAX)
+    return false;
+  return range_high > range_low;
+}
+
+//+------------------------------------------------------------------+
+//| Helper: compare two context ranges with epsilon tolerance        |
+//+------------------------------------------------------------------+
+bool IsSameRetestContext(
+  double first_high,
+  double first_low,
+  double second_high,
+  double second_low,
+  double epsilon
+) {
+  if(!HasValidRetestContext(first_high, first_low))
+    return false;
+  if(!HasValidRetestContext(second_high, second_low))
+    return false;
+  return MathAbs(first_high - second_high) <= epsilon &&
+         MathAbs(first_low - second_low)   <= epsilon;
+}
+
+//+------------------------------------------------------------------+
 //| Update cumulative support / resistance retest counters           |
 //+------------------------------------------------------------------+
 void UpdateRetestCounters(
@@ -233,13 +261,15 @@ void UpdateRetestCounters(
 ) {
   int array_size = ArraySize(extrema_array);
   int support_counter[FIBO_RETEST_ZONES_TOTAL];
+  double support_context_high[FIBO_RETEST_ZONES_TOTAL];
+  double support_context_low[FIBO_RETEST_ZONES_TOTAL];
+  bool support_context_active[FIBO_RETEST_ZONES_TOTAL];
+
   int resistance_counter[FIBO_RETEST_ZONES_TOTAL];
-  bool support_range_initialized[FIBO_RETEST_ZONES_TOTAL];
-  bool resistance_range_initialized[FIBO_RETEST_ZONES_TOTAL];
-  double support_range_high[FIBO_RETEST_ZONES_TOTAL];
-  double support_range_low[FIBO_RETEST_ZONES_TOTAL];
-  double resistance_range_high[FIBO_RETEST_ZONES_TOTAL];
-  double resistance_range_low[FIBO_RETEST_ZONES_TOTAL];
+  double resistance_context_high[FIBO_RETEST_ZONES_TOTAL];
+  double resistance_context_low[FIBO_RETEST_ZONES_TOTAL];
+  bool resistance_context_active[FIBO_RETEST_ZONES_TOTAL];
+
   double price_epsilon = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
 
   if(price_epsilon <= 0.0)
@@ -248,13 +278,76 @@ void UpdateRetestCounters(
   for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
   {
     support_counter[z] = 0;
+    support_context_high[z] = 0.0;
+    support_context_low[z] = 0.0;
+    support_context_active[z] = false;
+
     resistance_counter[z] = 0;
-    support_range_initialized[z] = false;
-    resistance_range_initialized[z] = false;
-    support_range_high[z] = 0.0;
-    support_range_low[z] = 0.0;
-    resistance_range_high[z] = 0.0;
-    resistance_range_low[z] = 0.0;
+    resistance_context_high[z] = 0.0;
+    resistance_context_low[z] = 0.0;
+    resistance_context_active[z] = false;
+  }
+
+  // Pass 1 (oldest -> newest): accumulate support counters and track peaks contexts
+  for(int i = array_size - 1; i >= 0; --i)
+  {
+    bool is_peak = extrema_array[i].is_peak;
+    for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
+    {
+      stats_array[i].fibo_retest_zones[z].support_retest_trigger = false;
+      stats_array[i].fibo_retest_zones[z].resistance_retest_trigger = false;
+      stats_array[i].fibo_retest_zones[z].support_retest_count = 0;
+      stats_array[i].fibo_retest_zones[z].resistance_retest_count = 0;
+    }
+
+    if(is_peak) continue;
+
+    for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
+    {
+      double zone_low = stats_array[i].fibo_retest_zones[z].zone_price_low;
+      double zone_high = stats_array[i].fibo_retest_zones[z].zone_price_high;
+      bool has_price_range = (zone_high > zone_low) && (zone_low != 0.0 || zone_high != 0.0);
+      double extern_high = stats_array[i].extern_oldest_high;
+      double extern_low  = stats_array[i].extern_oldest_low;
+      bool context_valid = has_price_range && HasValidRetestContext(extern_high, extern_low);
+
+      if(!context_valid)
+      {
+        support_context_active[z] = false;
+        support_counter[z] = 0;
+        continue;
+      }
+
+      bool zone_hit = stats_array[i].fibo_retest_zones[z].zone_hit;
+
+      bool same_support_context = support_context_active[z] &&
+        IsSameRetestContext(extern_high, extern_low, support_context_high[z], support_context_low[z], price_epsilon);
+
+      if(!same_support_context)
+      {
+        support_context_active[z] = true;
+        support_context_high[z] = extern_high;
+        support_context_low[z] = extern_low;
+        support_counter[z] = 0;
+      }
+
+      if(zone_hit)
+      {
+        support_counter[z]++;
+        stats_array[i].fibo_retest_zones[z].support_retest_trigger = true;
+      }
+
+      stats_array[i].fibo_retest_zones[z].support_retest_count = support_counter[z];
+    }
+  }
+
+  // Pass 2 (oldest -> newest): accumulate resistance counters for peaks
+  for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
+  {
+    resistance_counter[z] = 0;
+    resistance_context_active[z] = false;
+    resistance_context_high[z] = 0.0;
+    resistance_context_low[z] = 0.0;
   }
 
   for(int i = array_size - 1; i >= 0; --i)
@@ -263,38 +356,42 @@ void UpdateRetestCounters(
 
     for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
     {
-      stats_array[i].fibo_retest_zones[z].support_retest_trigger = false;
-      stats_array[i].fibo_retest_zones[z].resistance_retest_trigger = false;
-    }
-
-    for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
-    {
       double zone_low = stats_array[i].fibo_retest_zones[z].zone_price_low;
       double zone_high = stats_array[i].fibo_retest_zones[z].zone_price_high;
       bool has_price_range = (zone_high > zone_low) && (zone_low != 0.0 || zone_high != 0.0);
-      bool zone_hit = (stats_array[i].fibo_retest_zones[z].zone_hit && has_price_range);
       double extern_high = stats_array[i].extern_oldest_high;
       double extern_low  = stats_array[i].extern_oldest_low;
+      bool context_valid = has_price_range && HasValidRetestContext(extern_high, extern_low);
 
-      if(!has_price_range)
+      if(!context_valid)
       {
-        support_counter[z] = is_peak ? support_counter[z] : 0;
-        resistance_counter[z] = is_peak ? 0 : resistance_counter[z];
-        stats_array[i].fibo_retest_zones[z].support_retest_count = 0;
-        stats_array[i].fibo_retest_zones[z].resistance_retest_count = 0;
+        if(is_peak)
+        {
+          resistance_context_active[z] = false;
+          resistance_counter[z] = 0;
+        }
         continue;
       }
 
+      bool zone_hit = stats_array[i].fibo_retest_zones[z].zone_hit;
+
+      bool same_resistance_context = resistance_context_active[z] &&
+        IsSameRetestContext(
+          extern_high,
+          extern_low,
+          resistance_context_high[z],
+          resistance_context_low[z],
+          price_epsilon
+        );
+
       if(is_peak)
       {
-        if(!resistance_range_initialized[z] ||
-           MathAbs(extern_high - resistance_range_high[z]) > price_epsilon ||
-           MathAbs(extern_low - resistance_range_low[z]) > price_epsilon)
+        if(!same_resistance_context)
         {
+          resistance_context_active[z] = true;
+          resistance_context_high[z] = extern_high;
+          resistance_context_low[z] = extern_low;
           resistance_counter[z] = 0;
-          resistance_range_high[z] = extern_high;
-          resistance_range_low[z] = extern_low;
-          resistance_range_initialized[z] = true;
         }
 
         if(zone_hit)
@@ -303,30 +400,13 @@ void UpdateRetestCounters(
           stats_array[i].fibo_retest_zones[z].resistance_retest_trigger = true;
         }
 
-        stats_array[i].fibo_retest_zones[z].support_retest_count = 0;
         stats_array[i].fibo_retest_zones[z].resistance_retest_count = resistance_counter[z];
+        continue;
       }
-      else
-      {
-        if(!support_range_initialized[z] ||
-           MathAbs(extern_high - support_range_high[z]) > price_epsilon ||
-           MathAbs(extern_low - support_range_low[z]) > price_epsilon)
-        {
-          support_counter[z] = 0;
-          support_range_high[z] = extern_high;
-          support_range_low[z] = extern_low;
-          support_range_initialized[z] = true;
-        }
 
-        if(zone_hit)
-        {
-          support_counter[z]++;
-          stats_array[i].fibo_retest_zones[z].support_retest_trigger = true;
-        }
+      if(!same_resistance_context) continue;
 
-        stats_array[i].fibo_retest_zones[z].support_retest_count = support_counter[z];
-        stats_array[i].fibo_retest_zones[z].resistance_retest_count = 0;
-      }
+      stats_array[i].fibo_retest_zones[z].resistance_retest_count = resistance_counter[z];
     }
   }
 }
@@ -459,15 +539,14 @@ void CalculateAllExtremumStatistics(
       // Check if extension (>100%)
       stats_array[i].intern_is_extension = (stats_array[i].intern_fibo_level > 100.0);
 
-      // EXTERN is active only when INTERN >= 100% (full retest or breakout scenario)
-      // This includes retests (100%) and extensions (>100%)
-      stats_array[i].extern_is_active = (stats_array[i].intern_fibo_level >= 100.0);
+      bool has_reference_for_extern = (prev_same_type_index >= 0 && prev_opposite_index >= 0);
+      bool intern_gte_100 = (stats_array[i].intern_fibo_level >= 100.0);
 
       double extern_raw_level = 0.0;
       bool   has_complete_range = false;
 
       // Calculate EXTERN using the same reference structure as INTERN
-      if(stats_array[i].extern_is_active)
+      if(has_reference_for_extern)
       {
         CalculateExtremumExtern(
           extrema_array,
@@ -499,6 +578,9 @@ void CalculateAllExtremumStatistics(
           has_complete_range = true;
         }
       }
+
+      // EXTERN flagged active once the intern level completes a full retest or breakout
+      stats_array[i].extern_is_active = (has_complete_range && intern_gte_100);
 
       if(!has_complete_range)
       {
@@ -552,7 +634,7 @@ void CalculateAllExtremumStatistics(
 
           bool zone_hit = false;
 
-          if(stats_array[i].extern_is_active && has_valid_range)
+          if(has_valid_range)
           {
             if(price_start >= price_end)
             {

@@ -728,7 +728,7 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
 
           // MANUAL QA TESTING
           //if(zone.support_retest_count >= 3) TesterStop();
-          if(zone.resistance_retest_count >= 2) TesterStop();
+          //if(zone.resistance_retest_count >= 2) TesterStop();
         }
       }
 
