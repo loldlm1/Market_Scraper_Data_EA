@@ -106,6 +106,8 @@ bool GuardStochasticSignalDetection(const SignalTypes signal_type)
 void CloseBullishSignal(SignalParams &signal_bullish)
 {
   if(Enable_Logs) LogSignalParamsForTF(signal_bullish, PERIOD_M1);
+  if(Enable_Logs) Print("+++##########################################+++");
+  if(Enable_Logs) LogSignalParamsForTF(signal_bullish, PERIOD_M3);
 
   // MANAGE THE BULLISH SIGNAL STATE
   // if(signal_bullish.signal_state == OPENED) { ... }
@@ -117,6 +119,8 @@ void CloseBullishSignal(SignalParams &signal_bullish)
 void CloseBearishSignal(SignalParams &signal_bearish)
 {
   if(Enable_Logs) LogSignalParamsForTF(signal_bearish, PERIOD_M1);
+  if(Enable_Logs) Print("+++##########################################+++");
+  if(Enable_Logs) LogSignalParamsForTF(signal_bearish, PERIOD_M3);
 
   // MANAGE THE BULLISH SIGNAL STATE
   // if(signal_bearish.signal_state == OPENED) { ... }

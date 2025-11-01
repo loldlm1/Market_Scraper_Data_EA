@@ -630,8 +630,8 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
       PrintFormat("▼ ExtremumStatistics[%d] (tf = %s)  (period = %d)  [%d extrema]",
                   i, tf_str, m.indicator_period, n_extrema);
 
-      // Log first 5 extrema (most recent)
-      int max_log = MathMin(5, n_extrema);
+      // Log first 2 extrema (most recent)
+      int max_log = MathMin(2, n_extrema);
       for(int j = 0; j < max_log; j++)
       {
         const ExtremumStatistics es = m.extremum_stats[j];
@@ -683,6 +683,11 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
 
         PrintFormat("      Structure: %s",
                     OscillatorStructureTypesToString(es.structure_type));
+        PrintFormat("      Retest Context: type=%s extern_active=%s extern_level=%.2f%% price=%s",
+                    type_str,
+                    es.extern_is_active ? "true" : "false",
+                    es.extern_fibo_level,
+                    P(price));
 
         for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
         {
@@ -712,16 +717,22 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
           string support_tag = zone.support_retest_trigger ? " (+)" : "";
           string resistance_tag = zone.resistance_retest_trigger ? " (+)" : "";
 
-          PrintFormat("        Counts: support=%d%s  resistance=%d%s",
+          string focus_side = m.os_market_structures[j].is_peak ? "resistance" : "support";
+          PrintFormat("        Counts (%s focus): support=%d%s  resistance=%d%s",
+                      focus_side,
                       zone.support_retest_count,
                       support_tag,
                       zone.resistance_retest_count,
                       resistance_tag);
+
+          // MANUAL QA TESTING
+          //if(zone.support_retest_count >= 3) TesterStop();
+          // if(zone.resistance_retest_count >= 3) TesterStop();
         }
       }
 
-      if(n_extrema > 5)
-        PrintFormat("  ... and %d more extrema (showing first 5 only)", n_extrema - 5);
+      if(n_extrema > 2)
+        PrintFormat("  ... and %d more extrema (showing first 2 only)", n_extrema - 2);
 
       Print("  ────────────────────────────────────────────────────────────────────");
 

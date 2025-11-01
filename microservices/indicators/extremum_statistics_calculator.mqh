@@ -234,15 +234,33 @@ void UpdateRetestCounters(
   int array_size = ArraySize(extrema_array);
   int support_counter[FIBO_RETEST_ZONES_TOTAL];
   int resistance_counter[FIBO_RETEST_ZONES_TOTAL];
+  bool support_range_initialized[FIBO_RETEST_ZONES_TOTAL];
+  bool resistance_range_initialized[FIBO_RETEST_ZONES_TOTAL];
+  double support_range_high[FIBO_RETEST_ZONES_TOTAL];
+  double support_range_low[FIBO_RETEST_ZONES_TOTAL];
+  double resistance_range_high[FIBO_RETEST_ZONES_TOTAL];
+  double resistance_range_low[FIBO_RETEST_ZONES_TOTAL];
+  double price_epsilon = SymbolInfoDouble(_Symbol, SYMBOL_POINT);
+
+  if(price_epsilon <= 0.0)
+    price_epsilon = 0.0001;
 
   for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
   {
     support_counter[z] = 0;
     resistance_counter[z] = 0;
+    support_range_initialized[z] = false;
+    resistance_range_initialized[z] = false;
+    support_range_high[z] = 0.0;
+    support_range_low[z] = 0.0;
+    resistance_range_high[z] = 0.0;
+    resistance_range_low[z] = 0.0;
   }
 
   for(int i = array_size - 1; i >= 0; --i)
   {
+    bool is_peak = extrema_array[i].is_peak;
+
     for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
     {
       stats_array[i].fibo_retest_zones[z].support_retest_trigger = false;
@@ -251,22 +269,64 @@ void UpdateRetestCounters(
 
     for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
     {
-      if(stats_array[i].fibo_retest_zones[z].zone_hit)
+      double zone_low = stats_array[i].fibo_retest_zones[z].zone_price_low;
+      double zone_high = stats_array[i].fibo_retest_zones[z].zone_price_high;
+      bool has_price_range = (zone_high > zone_low) && (zone_low != 0.0 || zone_high != 0.0);
+      bool zone_hit = (stats_array[i].fibo_retest_zones[z].zone_hit && has_price_range);
+      double extern_high = stats_array[i].extern_oldest_high;
+      double extern_low  = stats_array[i].extern_oldest_low;
+
+      if(!has_price_range)
       {
-        if(extrema_array[i].is_peak)
+        support_counter[z] = is_peak ? support_counter[z] : 0;
+        resistance_counter[z] = is_peak ? 0 : resistance_counter[z];
+        stats_array[i].fibo_retest_zones[z].support_retest_count = 0;
+        stats_array[i].fibo_retest_zones[z].resistance_retest_count = 0;
+        continue;
+      }
+
+      if(is_peak)
+      {
+        if(!resistance_range_initialized[z] ||
+           MathAbs(extern_high - resistance_range_high[z]) > price_epsilon ||
+           MathAbs(extern_low - resistance_range_low[z]) > price_epsilon)
+        {
+          resistance_counter[z] = 0;
+          resistance_range_high[z] = extern_high;
+          resistance_range_low[z] = extern_low;
+          resistance_range_initialized[z] = true;
+        }
+
+        if(zone_hit)
         {
           resistance_counter[z]++;
           stats_array[i].fibo_retest_zones[z].resistance_retest_trigger = true;
         }
-        else
+
+        stats_array[i].fibo_retest_zones[z].support_retest_count = 0;
+        stats_array[i].fibo_retest_zones[z].resistance_retest_count = resistance_counter[z];
+      }
+      else
+      {
+        if(!support_range_initialized[z] ||
+           MathAbs(extern_high - support_range_high[z]) > price_epsilon ||
+           MathAbs(extern_low - support_range_low[z]) > price_epsilon)
+        {
+          support_counter[z] = 0;
+          support_range_high[z] = extern_high;
+          support_range_low[z] = extern_low;
+          support_range_initialized[z] = true;
+        }
+
+        if(zone_hit)
         {
           support_counter[z]++;
           stats_array[i].fibo_retest_zones[z].support_retest_trigger = true;
         }
-      }
 
-      stats_array[i].fibo_retest_zones[z].support_retest_count = support_counter[z];
-      stats_array[i].fibo_retest_zones[z].resistance_retest_count = resistance_counter[z];
+        stats_array[i].fibo_retest_zones[z].support_retest_count = support_counter[z];
+        stats_array[i].fibo_retest_zones[z].resistance_retest_count = 0;
+      }
     }
   }
 }
@@ -403,6 +463,7 @@ void CalculateAllExtremumStatistics(
       stats_array[i].extern_is_active = (stats_array[i].intern_fibo_level >= 100.0);
 
       double extern_raw_level = 0.0;
+      double extern_level_for_zone = 0.0;
       bool   has_complete_range = false;
 
       // Calculate EXTERN using the same reference structure as INTERN
@@ -433,6 +494,7 @@ void CalculateAllExtremumStatistics(
 
           double next_extern_level = 0.0;
           stats_array[i].extern_fibo_level = GetPreciseEntryLevelDefault(extern_raw_level, next_extern_level);
+          extern_level_for_zone = MathRound(extern_raw_level * 100.0) / 100.0;
           has_complete_range = true;
         }
       }
@@ -440,6 +502,7 @@ void CalculateAllExtremumStatistics(
       if(!has_complete_range)
       {
         stats_array[i].extern_fibo_level = 0.0;
+        extern_level_for_zone = 0.0;
       }
 
       if(has_complete_range)
@@ -450,6 +513,7 @@ void CalculateAllExtremumStatistics(
           double end_level   = zone_end_levels[z];
           double price_start = 0.0;
           double price_end   = 0.0;
+          bool   has_valid_range = false;
 
           if(current_is_peak)
           {
@@ -466,12 +530,30 @@ void CalculateAllExtremumStatistics(
           {
             double zone_min_price = MathMin(price_start, price_end);
             double zone_max_price = MathMax(price_start, price_end);
-            stats_array[i].fibo_retest_zones[z].zone_price_low = zone_min_price;
-            stats_array[i].fibo_retest_zones[z].zone_price_high = zone_max_price;
+
+            if(zone_max_price > zone_min_price)
+            {
+              stats_array[i].fibo_retest_zones[z].zone_price_low = zone_min_price;
+              stats_array[i].fibo_retest_zones[z].zone_price_high = zone_max_price;
+              has_valid_range = true;
+            }
+            else
+            {
+              stats_array[i].fibo_retest_zones[z].zone_price_low = 0.0;
+              stats_array[i].fibo_retest_zones[z].zone_price_high = 0.0;
+            }
+          }
+          else
+          {
+            stats_array[i].fibo_retest_zones[z].zone_price_low = 0.0;
+            stats_array[i].fibo_retest_zones[z].zone_price_high = 0.0;
           }
 
           stats_array[i].fibo_retest_zones[z].zone_hit =
-            (extern_raw_level >= start_level && extern_raw_level < end_level);
+            (stats_array[i].extern_is_active &&
+             has_valid_range &&
+             extern_level_for_zone >= start_level &&
+             extern_level_for_zone < end_level);
         }
       }
     }
