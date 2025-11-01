@@ -5,6 +5,7 @@
 #define _MICROSERVICES_UTILS_LOGS_HELPER_MQH_
 
 #include "../core/enums.mqh"
+#include "../indicators/structure_classifier.mqh"
 
 // Forward declarations - these will be resolved when indicator structures are included
 struct SignalParams;
@@ -13,6 +14,7 @@ struct StochasticStructure;
 struct StochasticMarketStructure;
 struct BodyMAStructure;
 struct ExtremumStatistics;
+struct RetestZoneStatistics;
 struct OscillatorMarketStructure;
 
 // External globals that will be defined in the main EA or service layer
@@ -681,6 +683,41 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
 
         PrintFormat("      Structure: %s",
                     OscillatorStructureTypesToString(es.structure_type));
+
+        for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
+        {
+          const RetestZoneStatistics zone = es.fibo_retest_zones[z];
+          double display_start = zone.zone_start_level;
+          double display_end   = zone.zone_end_level;
+
+          if(zone.zone_price_low > 0.0 || zone.zone_price_high > 0.0)
+          {
+            string zone_state = zone.zone_hit ? "[HIT]" : "[MISS]";
+            PrintFormat("      Retest Zone %d [%.1f%%, %.1f%%): %s %.5f → %.5f",
+                        z + 1,
+                        display_start,
+                        display_end,
+                        zone_state,
+                        zone.zone_price_low,
+                        zone.zone_price_high);
+          }
+          else
+          {
+            PrintFormat("      Retest Zone %d [%.1f%%, %.1f%%): <no range>",
+                        z + 1,
+                        display_start,
+                        display_end);
+          }
+
+          string support_tag = zone.support_retest_trigger ? " (+)" : "";
+          string resistance_tag = zone.resistance_retest_trigger ? " (+)" : "";
+
+          PrintFormat("        Counts: support=%d%s  resistance=%d%s",
+                      zone.support_retest_count,
+                      support_tag,
+                      zone.resistance_retest_count,
+                      resistance_tag);
+        }
       }
 
       if(n_extrema > 5)

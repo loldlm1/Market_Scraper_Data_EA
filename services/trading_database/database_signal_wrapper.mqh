@@ -4,6 +4,8 @@
 #ifndef _SERVICES_TRADING_DATABASE_DATABASE_SIGNAL_WRAPPER_MQH_
 #define _SERVICES_TRADING_DATABASE_DATABASE_SIGNAL_WRAPPER_MQH_
 
+#include "../../microservices/indicators/structure_classifier.mqh"
+
 // ───────────────────────────────────────────────────────────────────────
 // Helpers de formato/escape
 // ───────────────────────────────────────────────────────────────────────
@@ -559,8 +561,16 @@ bool InsertExtremumStatistics(const long signal_id, StochasticMarketStructure &m
         "signal_id, timeframe, period, extremum_index, "
         "extremum_time, extremum_price, is_peak, "
         "intern_fibo_level, intern_reference_price, intern_is_extension, "
+        "intern_fibo_raw_level, "
         "extern_fibo_level, extern_oldest_high, extern_oldest_low, "
-        "extern_structures_broken, extern_is_active, structure_type"
+        "extern_structures_broken, extern_is_active, "
+        "fibo_retest_zone_hit, fibo_retest_zone_low, fibo_retest_zone_high, "
+        "support_retest_count, resistance_retest_count, "
+        "support_retest_trigger, resistance_retest_trigger, "
+        "fibo_retest_zone2_hit, fibo_retest_zone2_low, fibo_retest_zone2_high, "
+        "support_retest_count_zone2, resistance_retest_count_zone2, "
+        "support_retest_trigger_zone2, resistance_retest_trigger_zone2, "
+        "structure_type"
         ") ";
 
       string query_values = "VALUES (";
@@ -578,6 +588,7 @@ bool InsertExtremumStatistics(const long signal_id, StochasticMarketStructure &m
       query_values += SqlFiboValue(stats.intern_fibo_level) + ", ";
       query_values += SqlPriceValue(stats.intern_reference_price) + ", ";
       query_values += (stats.intern_is_extension ? "1" : "0") + ", ";
+      query_values += SqlFiboValue(stats.intern_fibo_raw_level) + ", ";
 
       // EXTREMUM_EXTERN stats
       query_values += SqlFiboValue(stats.extern_fibo_level) + ", ";
@@ -585,6 +596,28 @@ bool InsertExtremumStatistics(const long signal_id, StochasticMarketStructure &m
       query_values += SqlPriceValue(stats.extern_oldest_low) + ", ";
       query_values += IntegerToString(stats.extern_structures_broken) + ", ";
       query_values += (stats.extern_is_active ? "1" : "0") + ", ";
+
+      // RETEST metrics (Zone 1)
+      RetestZoneStatistics zone1 = stats.fibo_retest_zones[0];
+      query_values += (zone1.zone_hit ? "1" : "0") + ", ";
+      query_values += SqlPriceValue(zone1.zone_price_low) + ", ";
+      query_values += SqlPriceValue(zone1.zone_price_high) + ", ";
+      query_values += IntegerToString(zone1.support_retest_count) + ", ";
+      query_values += IntegerToString(zone1.resistance_retest_count) + ", ";
+      query_values += (zone1.support_retest_trigger ? "1" : "0") + ", ";
+      query_values += (zone1.resistance_retest_trigger ? "1" : "0") + ", ";
+
+      // RETEST metrics (Zone 2)
+      RetestZoneStatistics zone2;
+      if(FIBO_RETEST_ZONES_TOTAL > 1)
+        zone2 = stats.fibo_retest_zones[1];
+      query_values += (zone2.zone_hit ? "1" : "0") + ", ";
+      query_values += SqlPriceValue(zone2.zone_price_low) + ", ";
+      query_values += SqlPriceValue(zone2.zone_price_high) + ", ";
+      query_values += IntegerToString(zone2.support_retest_count) + ", ";
+      query_values += IntegerToString(zone2.resistance_retest_count) + ", ";
+      query_values += (zone2.support_retest_trigger ? "1" : "0") + ", ";
+      query_values += (zone2.resistance_retest_trigger ? "1" : "0") + ", ";
 
       // Structure type
       query_values += SqlEnumValue((int)stats.structure_type, 0, 6, DEF_OSC_STRUCT_TYPE);

@@ -7,6 +7,53 @@
 #include "../core/enums.mqh"
 #include "extrema_detector.mqh"
 
+// Fibonacci retest windows
+const double FIBO_RETEST_ZONE1_START = 61.8;
+const double FIBO_RETEST_ZONE1_END   = 78.6;
+const double FIBO_RETEST_ZONE2_START = 78.6;
+const double FIBO_RETEST_ZONE2_END   = 100.0;
+
+#define FIBO_RETEST_ZONES_TOTAL 2
+
+struct RetestZoneStatistics
+{
+  double zone_start_level;
+  double zone_end_level;
+  double zone_price_low;
+  double zone_price_high;
+  bool   zone_hit;
+  int    support_retest_count;
+  int    resistance_retest_count;
+  bool   support_retest_trigger;
+  bool   resistance_retest_trigger;
+
+  RetestZoneStatistics()
+  {
+    zone_start_level        = 0.0;
+    zone_end_level          = 0.0;
+    zone_price_low          = 0.0;
+    zone_price_high         = 0.0;
+    zone_hit                = false;
+    support_retest_count    = 0;
+    resistance_retest_count = 0;
+    support_retest_trigger  = false;
+    resistance_retest_trigger = false;
+  }
+
+  RetestZoneStatistics(const RetestZoneStatistics &other)
+  {
+    zone_start_level        = other.zone_start_level;
+    zone_end_level          = other.zone_end_level;
+    zone_price_low          = other.zone_price_low;
+    zone_price_high         = other.zone_price_high;
+    zone_hit                = other.zone_hit;
+    support_retest_count    = other.support_retest_count;
+    resistance_retest_count = other.resistance_retest_count;
+    support_retest_trigger  = other.support_retest_trigger;
+    resistance_retest_trigger = other.resistance_retest_trigger;
+  }
+};
+
 // Helper structure to hold time/price pairs for structures
 struct StructureTimePrice
 {
@@ -29,6 +76,7 @@ struct ExtremumStatistics
   double   intern_fibo_level;        // Fib % from previous opposite extremum
   double   intern_reference_price;   // The reference price used
   bool     intern_is_extension;      // True if > 100%
+  double   intern_fibo_raw_level;    // Raw fib % prior to snapping
 
   // EXTREMUM_EXTERN
   double   extern_fibo_level;        // Fib % from oldest extremum range
@@ -40,6 +88,9 @@ struct ExtremumStatistics
   // Structure classification
   OscillatorStructureTypes structure_type; // HH, HL, LL, LH, EQ
 
+  // Support / resistance retest tracking (two zones)
+  RetestZoneStatistics fibo_retest_zones[FIBO_RETEST_ZONES_TOTAL];
+
   // DEFAULT CONSTRUCTOR
   ExtremumStatistics()
   {
@@ -47,12 +98,17 @@ struct ExtremumStatistics
     intern_fibo_level        = 0.0;
     intern_reference_price   = 0.0;
     intern_is_extension      = false;
+    intern_fibo_raw_level    = 0.0;
     extern_fibo_level        = 0.0;
     extern_oldest_high       = -DBL_MAX;
     extern_oldest_low        = DBL_MAX;
     extern_structures_broken = 0;
     extern_is_active         = false;
     structure_type           = OSCILLATOR_STRUCTURE_EQ;
+    for(int i = 0; i < FIBO_RETEST_ZONES_TOTAL; i++)
+    {
+      fibo_retest_zones[i] = RetestZoneStatistics();
+    }
   }
 
   // COPY CONSTRUCTOR
@@ -62,12 +118,17 @@ struct ExtremumStatistics
     intern_fibo_level        = other.intern_fibo_level;
     intern_reference_price   = other.intern_reference_price;
     intern_is_extension      = other.intern_is_extension;
+    intern_fibo_raw_level    = other.intern_fibo_raw_level;
     extern_fibo_level        = other.extern_fibo_level;
     extern_oldest_high       = other.extern_oldest_high;
     extern_oldest_low        = other.extern_oldest_low;
     extern_structures_broken = other.extern_structures_broken;
     extern_is_active         = other.extern_is_active;
     structure_type           = other.structure_type;
+    for(int i = 0; i < FIBO_RETEST_ZONES_TOTAL; i++)
+    {
+      fibo_retest_zones[i] = other.fibo_retest_zones[i];
+    }
   }
 };
 

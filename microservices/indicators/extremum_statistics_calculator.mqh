@@ -212,18 +212,8 @@ void CalculateExtremumExtern(
     }
   }
 
-  // Step 3: calculate fibonacci level using the selected historical swing.
-  if(stats.extern_oldest_high > stats.extern_oldest_low)
-  {
-    stats.extern_fibo_level = GetFiboTrendPeakPercent(stats.extern_oldest_high, stats.extern_oldest_low, current_price);
-
-    double next_level = 0.0;
-    stats.extern_fibo_level = GetPreciseEntryLevelDefault(stats.extern_fibo_level, next_level);
-  }
-  else
-  {
-    stats.extern_fibo_level = 0.0;
-  }
+  // Step 3: fibonacci level is computed later once the complete range context is applied.
+  stats.extern_fibo_level = 0.0;
 
   // Count every intervening same-type structure broken en route to the reference level.
   stats.extern_structures_broken = CountStructuresBroken(
@@ -232,6 +222,53 @@ void CalculateExtremumExtern(
     reference_index,
     is_peak
   );
+}
+
+//+------------------------------------------------------------------+
+//| Update cumulative support / resistance retest counters           |
+//+------------------------------------------------------------------+
+void UpdateRetestCounters(
+  OscillatorMarketStructure &extrema_array[],
+  ExtremumStatistics &stats_array[]
+) {
+  int array_size = ArraySize(extrema_array);
+  int support_counter[FIBO_RETEST_ZONES_TOTAL];
+  int resistance_counter[FIBO_RETEST_ZONES_TOTAL];
+
+  for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
+  {
+    support_counter[z] = 0;
+    resistance_counter[z] = 0;
+  }
+
+  for(int i = array_size - 1; i >= 0; --i)
+  {
+    for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
+    {
+      stats_array[i].fibo_retest_zones[z].support_retest_trigger = false;
+      stats_array[i].fibo_retest_zones[z].resistance_retest_trigger = false;
+    }
+
+    for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
+    {
+      if(stats_array[i].fibo_retest_zones[z].zone_hit)
+      {
+        if(extrema_array[i].is_peak)
+        {
+          resistance_counter[z]++;
+          stats_array[i].fibo_retest_zones[z].resistance_retest_trigger = true;
+        }
+        else
+        {
+          support_counter[z]++;
+          stats_array[i].fibo_retest_zones[z].support_retest_trigger = true;
+        }
+      }
+
+      stats_array[i].fibo_retest_zones[z].support_retest_count = support_counter[z];
+      stats_array[i].fibo_retest_zones[z].resistance_retest_count = resistance_counter[z];
+    }
+  }
 }
 
 //+------------------------------------------------------------------+
@@ -252,11 +289,48 @@ void CalculateAllExtremumStatistics(
   // First classify all structure types
   ClassifyAllStructureTypes(extrema_array, stats_array);
 
+  double zone_start_levels[FIBO_RETEST_ZONES_TOTAL];
+  double zone_end_levels[FIBO_RETEST_ZONES_TOTAL];
+
+  if(FIBO_RETEST_ZONES_TOTAL >= 1)
+  {
+    zone_start_levels[0] = FIBO_RETEST_ZONE1_START;
+    zone_end_levels[0]   = FIBO_RETEST_ZONE1_END;
+  }
+  if(FIBO_RETEST_ZONES_TOTAL >= 2)
+  {
+    zone_start_levels[1] = FIBO_RETEST_ZONE2_START;
+    zone_end_levels[1]   = FIBO_RETEST_ZONE2_END;
+  }
+
   // Calculate EXTREMUM_INTERN for each extremum
   // INTERN measures: from previous opposite extremum to current, relative to previous same-type extremum
   for(int i = 0; i < array_size; i++)
   {
     bool current_is_peak = extrema_array[i].is_peak;
+    double current_price = current_is_peak ? extrema_array[i].extremum_high : extrema_array[i].extremum_low;
+
+    // Reset per-iteration statistics
+    stats_array[i].intern_reference_price   = 0.0;
+    stats_array[i].intern_fibo_level        = 0.0;
+    stats_array[i].intern_fibo_raw_level    = 0.0;
+    stats_array[i].intern_is_extension      = false;
+    stats_array[i].extern_is_active         = false;
+    stats_array[i].extern_oldest_high       = -DBL_MAX;
+    stats_array[i].extern_oldest_low        = DBL_MAX;
+    stats_array[i].extern_structures_broken = 0;
+    for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
+    {
+      stats_array[i].fibo_retest_zones[z].zone_start_level = zone_start_levels[z];
+      stats_array[i].fibo_retest_zones[z].zone_end_level   = zone_end_levels[z];
+      stats_array[i].fibo_retest_zones[z].zone_price_low   = 0.0;
+      stats_array[i].fibo_retest_zones[z].zone_price_high  = 0.0;
+      stats_array[i].fibo_retest_zones[z].zone_hit         = false;
+      stats_array[i].fibo_retest_zones[z].support_retest_count = 0;
+      stats_array[i].fibo_retest_zones[z].resistance_retest_count = 0;
+      stats_array[i].fibo_retest_zones[z].support_retest_trigger = false;
+      stats_array[i].fibo_retest_zones[z].resistance_retest_trigger = false;
+    }
 
     // Find previous opposite extremum (immediately before current)
     int prev_opposite_index = -1;
@@ -271,54 +345,55 @@ void CalculateAllExtremumStatistics(
       else if(extrema_array[j].is_peak == current_is_peak && prev_same_type_index == -1)
       {
         prev_same_type_index = j;
-        break; // Found both, can stop
+        if(prev_opposite_index >= 0)
+          break; // Found both, can stop
       }
     }
 
     // Need at least previous opposite extremum to calculate INTERN
     if(prev_opposite_index >= 0)
     {
-      double current_price = current_is_peak ? extrema_array[i].extremum_high : extrema_array[i].extremum_low;
-      double reference_price = current_is_peak ? extrema_array[prev_opposite_index].extremum_low : extrema_array[prev_opposite_index].extremum_high;
+      double reference_price = current_is_peak ?
+        extrema_array[prev_opposite_index].extremum_low :
+        extrema_array[prev_opposite_index].extremum_high;
 
       stats_array[i].intern_reference_price = reference_price;
+
+      double prev_same_type_price = current_price;
+      if(prev_same_type_index >= 0)
+      {
+        prev_same_type_price = current_is_peak ?
+          extrema_array[prev_same_type_index].extremum_high :
+          extrema_array[prev_same_type_index].extremum_low;
+      }
+
+      double intern_raw_level = 100.0;
 
       if(current_is_peak)
       {
         // For Peak: measure from previous bottom (0%) to current peak
-        // If we have previous peak, that's the 100% mark
-        double prev_peak_price = (prev_same_type_index >= 0) ? extrema_array[prev_same_type_index].extremum_high : current_price;
-
-        // Calculate percentage: current position from bottom relative to (previous peak - bottom) range
-        if(prev_peak_price > reference_price)
+        if(prev_same_type_price > reference_price)
         {
-          stats_array[i].intern_fibo_level = ((current_price - reference_price) / (prev_peak_price - reference_price)) * 100.0;
-        }
-        else
-        {
-          stats_array[i].intern_fibo_level = 100.0; // Default if no valid range
+          intern_raw_level = ((current_price - reference_price) / (prev_same_type_price - reference_price)) * 100.0;
         }
       }
       else
       {
         // For Bottom: measure from previous peak (0%) to current bottom
-        // If we have previous bottom, that's the 100% mark
-        double prev_bottom_price = (prev_same_type_index >= 0) ? extrema_array[prev_same_type_index].extremum_low : current_price;
-
-        // Calculate percentage: current position from peak relative to (peak - previous bottom) range
-        if(reference_price > prev_bottom_price)
+        if(reference_price > prev_same_type_price)
         {
-          stats_array[i].intern_fibo_level = ((reference_price - current_price) / (reference_price - prev_bottom_price)) * 100.0;
-        }
-        else
-        {
-          stats_array[i].intern_fibo_level = 100.0; // Default if no valid range
+          intern_raw_level = ((reference_price - current_price) / (reference_price - prev_same_type_price)) * 100.0;
         }
       }
 
+      if(intern_raw_level < 0.0)
+        intern_raw_level = 0.0;
+
+      stats_array[i].intern_fibo_raw_level = intern_raw_level;
+
       // Snap to nearest DefaultFibonacciLevel and normalize
       double next_level = 0;
-      stats_array[i].intern_fibo_level = GetPreciseEntryLevelDefault(stats_array[i].intern_fibo_level, next_level);
+      stats_array[i].intern_fibo_level = GetPreciseEntryLevelDefault(intern_raw_level, next_level);
 
       // Check if extension (>100%)
       stats_array[i].intern_is_extension = (stats_array[i].intern_fibo_level > 100.0);
@@ -326,6 +401,9 @@ void CalculateAllExtremumStatistics(
       // EXTERN is active only when INTERN >= 100% (full retest or breakout scenario)
       // This includes retests (100%) and extensions (>100%)
       stats_array[i].extern_is_active = (stats_array[i].intern_fibo_level >= 100.0);
+
+      double extern_raw_level = 0.0;
+      bool   has_complete_range = false;
 
       // Calculate EXTERN using the same reference structure as INTERN
       if(stats_array[i].extern_is_active)
@@ -337,9 +415,69 @@ void CalculateAllExtremumStatistics(
           prev_opposite_index,
           stats_array[i]
         );
+
+        double range_high = stats_array[i].extern_oldest_high;
+        double range_low  = stats_array[i].extern_oldest_low;
+
+        if(range_high > range_low &&
+           range_high != -DBL_MAX &&
+           range_low  != DBL_MAX)
+        {
+          if(current_is_peak)
+            extern_raw_level = GetFiboTrendPeakPercent(range_high, range_low, current_price);
+          else
+            extern_raw_level = GetFiboTrendBottomPercent(range_high, range_low, current_price);
+
+          if(extern_raw_level < 0.0)
+            extern_raw_level = 0.0;
+
+          double next_extern_level = 0.0;
+          stats_array[i].extern_fibo_level = GetPreciseEntryLevelDefault(extern_raw_level, next_extern_level);
+          has_complete_range = true;
+        }
+      }
+
+      if(!has_complete_range)
+      {
+        stats_array[i].extern_fibo_level = 0.0;
+      }
+
+      if(has_complete_range)
+      {
+        for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
+        {
+          double start_level = zone_start_levels[z];
+          double end_level   = zone_end_levels[z];
+          double price_start = 0.0;
+          double price_end   = 0.0;
+
+          if(current_is_peak)
+          {
+            price_start = GetFiboTrendPeakPrice(stats_array[i].extern_oldest_high, stats_array[i].extern_oldest_low, start_level);
+            price_end   = GetFiboTrendPeakPrice(stats_array[i].extern_oldest_high, stats_array[i].extern_oldest_low, end_level);
+          }
+          else
+          {
+            price_start = GetFiboTrendBottomPrice(stats_array[i].extern_oldest_high, stats_array[i].extern_oldest_low, start_level);
+            price_end   = GetFiboTrendBottomPrice(stats_array[i].extern_oldest_high, stats_array[i].extern_oldest_low, end_level);
+          }
+
+          if(price_start != 0.0 || price_end != 0.0)
+          {
+            double zone_min_price = MathMin(price_start, price_end);
+            double zone_max_price = MathMax(price_start, price_end);
+            stats_array[i].fibo_retest_zones[z].zone_price_low = zone_min_price;
+            stats_array[i].fibo_retest_zones[z].zone_price_high = zone_max_price;
+          }
+
+          stats_array[i].fibo_retest_zones[z].zone_hit =
+            (extern_raw_level >= start_level && extern_raw_level < end_level);
+        }
       }
     }
   }
+
+  UpdateRetestCounters(extrema_array, stats_array);
 }
 
 #endif // _MICROSERVICES_INDICATORS_EXTREMUM_STATISTICS_CALCULATOR_MQH_

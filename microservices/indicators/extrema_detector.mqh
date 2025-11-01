@@ -83,11 +83,11 @@ bool DetectMarketExtrema(
   initial_is_bottom   = false;
 
   // --- copiar buffers ---
-  int n_ext  = CopyBuffer(indicator_handle.indicator_handle, 0, 0, 2333, indicator_extremum_values);
-  int n_peak = CopyBuffer(indicator_handle.indicator_handle, 1, 0, 2333, indicator_peak_values);
-  int n_bot  = CopyBuffer(indicator_handle.indicator_handle, 2, 0, 2333, indicator_bottom_values);
-  int n_sext = CopyBuffer(indicator_handle.indicator_handle, 3, 0, 2333, indicator_stoch_extremum_values);
-  int n_main = CopyBuffer(indicator_handle.indicator_handle, 4, 0, 2333, indicator_main_values);
+  int n_ext  = CopyBuffer(indicator_handle.indicator_handle, 0, 0, 4320, indicator_extremum_values);
+  int n_peak = CopyBuffer(indicator_handle.indicator_handle, 1, 0, 4320, indicator_peak_values);
+  int n_bot  = CopyBuffer(indicator_handle.indicator_handle, 2, 0, 4320, indicator_bottom_values);
+  int n_sext = CopyBuffer(indicator_handle.indicator_handle, 3, 0, 4320, indicator_stoch_extremum_values);
+  int n_main = CopyBuffer(indicator_handle.indicator_handle, 4, 0, 4320, indicator_main_values);
 
   if(n_ext <= 0 || n_peak <= 0 || n_bot <= 0 || n_sext <= 0 || n_main <= 0)
   {
