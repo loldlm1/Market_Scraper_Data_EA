@@ -683,10 +683,11 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
 
         PrintFormat("      Structure: %s",
                     OscillatorStructureTypesToString(es.structure_type));
-        PrintFormat("      Retest Context: type=%s extern_active=%s extern_level=%.2f%% price=%s",
+        PrintFormat("      Retest Context: type=%s extern_active=%s extern_level=%.2f%% raw=%.2f%% price=%s",
                     type_str,
                     es.extern_is_active ? "true" : "false",
                     es.extern_fibo_level,
+                    es.extern_fibo_raw_level,
                     P(price));
 
         for(int z = 0; z < FIBO_RETEST_ZONES_TOTAL; z++)
@@ -727,7 +728,7 @@ void LogSignalParamsForTF(const SignalParams &signal_params,
 
           // MANUAL QA TESTING
           //if(zone.support_retest_count >= 3) TesterStop();
-          // if(zone.resistance_retest_count >= 3) TesterStop();
+          if(zone.resistance_retest_count >= 2) TesterStop();
         }
       }
 

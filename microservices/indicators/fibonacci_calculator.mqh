@@ -36,20 +36,28 @@ struct FibonacciLevelPrices
 double GetPreciseEntryLevel(double entry_level, double &next_level)
 {
   int    fibonacci_levels_total = ArraySize(AllFibonacciLevels)-1;
-  double entry_level_plus       = 0;
+  double normalized_level       = NormalizeDouble(entry_level, 2);
+
+  if(normalized_level <= AllFibonacciLevels[0])
+  {
+    next_level = AllFibonacciLevels[1];
+    return AllFibonacciLevels[0];
+  }
 
   for(int i = 0; i < fibonacci_levels_total; i++)
   {
-    entry_level_plus = NormalizeDouble(entry_level + 1.0, 1); // ADD A +1 TO COVER INCORRECT DECIMAL ENTRY LEVELS
+    double lower = AllFibonacciLevels[i];
+    double upper = AllFibonacciLevels[i+1];
 
-    if(entry_level_plus >= AllFibonacciLevels[i] && entry_level_plus < AllFibonacciLevels[i+1])
+    if(normalized_level >= lower && normalized_level < upper)
     {
-      next_level = AllFibonacciLevels[i+1];
-      return AllFibonacciLevels[i];
+      next_level = upper;
+      return lower;
     }
   }
 
-  return entry_level;
+  next_level = AllFibonacciLevels[fibonacci_levels_total];
+  return AllFibonacciLevels[fibonacci_levels_total];
 }
 
 //+------------------------------------------------------------------+
@@ -59,20 +67,28 @@ double GetPreciseEntryLevel(double entry_level, double &next_level)
 double GetPreciseEntryLevelDefault(double entry_level, double &next_level)
 {
   int    fibonacci_levels_total = ArraySize(DefaultFibonacciLevels)-1;
-  double entry_level_plus       = 0;
+  double normalized_level       = NormalizeDouble(entry_level, 2);
+
+  if(normalized_level <= DefaultFibonacciLevels[0])
+  {
+    next_level = DefaultFibonacciLevels[1];
+    return DefaultFibonacciLevels[0];
+  }
 
   for(int i = 0; i < fibonacci_levels_total; i++)
   {
-    entry_level_plus = NormalizeDouble(entry_level + 1.0, 1); // ADD A +1 TO COVER INCORRECT DECIMAL ENTRY LEVELS
+    double lower = DefaultFibonacciLevels[i];
+    double upper = DefaultFibonacciLevels[i+1];
 
-    if(entry_level_plus >= DefaultFibonacciLevels[i] && entry_level_plus < DefaultFibonacciLevels[i+1])
+    if(normalized_level >= lower && normalized_level < upper)
     {
-      next_level = DefaultFibonacciLevels[i+1];
-      return DefaultFibonacciLevels[i];
+      next_level = upper;
+      return lower;
     }
   }
 
-  return entry_level;
+  next_level = DefaultFibonacciLevels[fibonacci_levels_total];
+  return DefaultFibonacciLevels[fibonacci_levels_total];
 }
 
 //+------------------------------------------------------------------+

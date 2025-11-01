@@ -374,6 +374,7 @@ void CalculateAllExtremumStatistics(
     stats_array[i].intern_reference_price   = 0.0;
     stats_array[i].intern_fibo_level        = 0.0;
     stats_array[i].intern_fibo_raw_level    = 0.0;
+    stats_array[i].extern_fibo_raw_level    = 0.0;
     stats_array[i].intern_is_extension      = false;
     stats_array[i].extern_is_active         = false;
     stats_array[i].extern_oldest_high       = -DBL_MAX;
@@ -463,7 +464,6 @@ void CalculateAllExtremumStatistics(
       stats_array[i].extern_is_active = (stats_array[i].intern_fibo_level >= 100.0);
 
       double extern_raw_level = 0.0;
-      double extern_level_for_zone = 0.0;
       bool   has_complete_range = false;
 
       // Calculate EXTERN using the same reference structure as INTERN
@@ -492,9 +492,10 @@ void CalculateAllExtremumStatistics(
           if(extern_raw_level < 0.0)
             extern_raw_level = 0.0;
 
+          stats_array[i].extern_fibo_raw_level = extern_raw_level;
+
           double next_extern_level = 0.0;
           stats_array[i].extern_fibo_level = GetPreciseEntryLevelDefault(extern_raw_level, next_extern_level);
-          extern_level_for_zone = MathRound(extern_raw_level * 100.0) / 100.0;
           has_complete_range = true;
         }
       }
@@ -502,7 +503,7 @@ void CalculateAllExtremumStatistics(
       if(!has_complete_range)
       {
         stats_array[i].extern_fibo_level = 0.0;
-        extern_level_for_zone = 0.0;
+        stats_array[i].extern_fibo_raw_level = 0.0;
       }
 
       if(has_complete_range)
@@ -549,11 +550,21 @@ void CalculateAllExtremumStatistics(
             stats_array[i].fibo_retest_zones[z].zone_price_high = 0.0;
           }
 
-          stats_array[i].fibo_retest_zones[z].zone_hit =
-            (stats_array[i].extern_is_active &&
-             has_valid_range &&
-             extern_level_for_zone >= start_level &&
-             extern_level_for_zone < end_level);
+          bool zone_hit = false;
+
+          if(stats_array[i].extern_is_active && has_valid_range)
+          {
+            if(price_start >= price_end)
+            {
+              zone_hit = (current_price <= price_start && current_price > price_end);
+            }
+            else
+            {
+              zone_hit = (current_price >= price_start && current_price < price_end);
+            }
+          }
+
+          stats_array[i].fibo_retest_zones[z].zone_hit = zone_hit;
         }
       }
     }

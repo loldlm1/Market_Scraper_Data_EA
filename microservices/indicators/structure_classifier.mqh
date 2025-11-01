@@ -79,6 +79,7 @@ struct ExtremumStatistics
   double   intern_fibo_raw_level;    // Raw fib % prior to snapping
 
   // EXTREMUM_EXTERN
+  double   extern_fibo_raw_level;    // Raw fib % prior to snapping
   double   extern_fibo_level;        // Fib % from oldest extremum range
   double   extern_oldest_high;       // Oldest peak reference
   double   extern_oldest_low;        // Oldest bottom reference
@@ -99,6 +100,7 @@ struct ExtremumStatistics
     intern_reference_price   = 0.0;
     intern_is_extension      = false;
     intern_fibo_raw_level    = 0.0;
+    extern_fibo_raw_level    = 0.0;
     extern_fibo_level        = 0.0;
     extern_oldest_high       = -DBL_MAX;
     extern_oldest_low        = DBL_MAX;
@@ -119,6 +121,7 @@ struct ExtremumStatistics
     intern_reference_price   = other.intern_reference_price;
     intern_is_extension      = other.intern_is_extension;
     intern_fibo_raw_level    = other.intern_fibo_raw_level;
+    extern_fibo_raw_level    = other.extern_fibo_raw_level;
     extern_fibo_level        = other.extern_fibo_level;
     extern_oldest_high       = other.extern_oldest_high;
     extern_oldest_low        = other.extern_oldest_low;
